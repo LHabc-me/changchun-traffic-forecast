@@ -23,6 +23,7 @@
   "devDependencies": {
     "@electron-toolkit/eslint-config": "^1.0.1",
     "@electron-toolkit/eslint-config-prettier": "^1.0.1",
+    "@fluentui/react-components": "^9.42.0",
     "@vitejs/plugin-react": "^4.0.4",
     "electron": "^25.6.0",
     "electron-builder": "^24.6.3",
@@ -33,6 +34,7 @@
     "prettier": "^3.0.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-leaflet": "^4.2.1",
     "vite": "^4.4.9"
   }
 }
