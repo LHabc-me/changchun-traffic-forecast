@@ -19,6 +19,7 @@ function Grid(props) {
   const [rects, setRects] = useState([]);
 
   const redraw = () => {
+    if (colors.length === 0) return;
     const bounds = map.getBounds(); // 当前地图的可视范围，超出范围的矩形不绘制
     const arr = [];
     for (let i = Math.max(lng1, bounds.getWest()); i < Math.min(lng2, bounds.getEast()); i += rectLength * lngperm) {
@@ -39,7 +40,7 @@ function Grid(props) {
   };
   useEffect(() => {
     redraw();
-  }, [rectLength]);
+  }, [rectLength, colors]);
 
   useMapEvents({
     moveend() {

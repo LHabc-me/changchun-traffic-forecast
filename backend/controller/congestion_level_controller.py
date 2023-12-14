@@ -11,8 +11,8 @@ def congestion_level_controller():
         request:
         {
             "grid": {
-                "width": 10, // 网络宽度
-                "height": 10, // 网络高度
+                "width": 10, // 网络宽度 单位：米
+                "height": 10, // 网络高度 单位：米
                 "from": [0, 0], // 起点经纬度
                 "to": [9, 9], // 终点经纬度
             },

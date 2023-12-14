@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request
+from flask import Flask
 from controller.congestion_level_controller import congestion_level
 from flask_cors import CORS
 

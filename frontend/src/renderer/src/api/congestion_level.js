@@ -4,8 +4,8 @@ import axios from "axios";
         request:
         {
             "grid": {
-                "width": 10, // 网络宽度
-                "height": 10, // 网络高度
+                "width": 10, // 网络宽度 单位：米
+                "height": 10, // 网络高度 单位：米
                 "from": [0, 0], // 起点经纬度
                 "to": [9, 9], // 终点经纬度
             },
@@ -33,7 +33,6 @@ async function get_congestion_level({ grid, timespan }) {
     timespan: timespan
   };
   const response = await axios.post("/congestion_level", request);
-  console.log(response.data);
   return response.data;
 }
 

@@ -1,12 +1,11 @@
 import { useEffect, useRef, useState } from "react";
-import { Slider } from "@fluentui/react-components";
+import { Button, Slider } from "@fluentui/react-components";
 import Map from "./components/Map";
 import Grid from "./components/Grid";
 import get_congestion_level from "./api/congestion_level";
+import AppConfig from "./appConfig";
 
 function App() {
-  const [rectLength, setRectLength] = useState(500);// 矩形宽度 单位：米
-  const [colors, setColors] = useState([]);
   const lngspan = [
     125.10861111111111,
     125.57722222222222
@@ -15,9 +14,10 @@ function App() {
     43.7325,
     44.00277777777778
   ];
-  useEffect(() => {
-    get_congestion_level(
-      {
+  const [rectLength, setRectLength] = useState(500);// 矩形宽度 单位：米
+  const [colors, setColors] = useState([]);
+  const reload = () => {
+    get_congestion_level({
         grid: {
           width: rectLength,
           height: rectLength,
@@ -29,10 +29,14 @@ function App() {
           to: "2020-10-01 23:59:59"
         }
       }
-    ).then(res => {
-      setColors(res.data);
+    ).then(({ data }) => {
+      // setColors(data.map(item => colorMap[item]));
+      setColors(
+        Array.from({ length: 100000 })
+          .map(() => AppConfig.colorMap[Math.floor(Math.random() * 10) + 1])
+      );
     });
-  });
+  };
   return (
     <div style={{
       height: "100vh",
@@ -48,7 +52,10 @@ function App() {
                 onChange={(_, data) => {
                   setRectLength(data.value);
                 }} />
-        {rectLength}
+        <div>
+          {rectLength}
+        </div>
+        <Button onClick={reload}>刷新</Button>
       </div>
       <div style={{
         height: "100%",
@@ -61,8 +68,7 @@ function App() {
           <Grid rectLength={rectLength}
                 lngspan={lngspan}
                 latspan={latspan}
-                colors={colors}
-          />
+                colors={colors} />
         </Map>
       </div>
     </div>
