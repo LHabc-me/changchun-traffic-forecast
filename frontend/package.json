@@ -1,5 +1,5 @@
 {
-  "name": "jl-map",
+  "name": "changchun-traffic-forecast",
   "version": "1.0.0",
   "description": "An Electron application with React",
   "main": "./out/main/index.js",
@@ -25,6 +25,7 @@
     "@electron-toolkit/eslint-config-prettier": "^1.0.1",
     "@fluentui/react-components": "^9.42.0",
     "@vitejs/plugin-react": "^4.0.4",
+    "axios": "^1.6.2",
     "electron": "^25.6.0",
     "electron-builder": "^24.6.3",
     "electron-vite": "^1.0.27",
