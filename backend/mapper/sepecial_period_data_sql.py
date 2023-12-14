@@ -20,7 +20,9 @@ def query_data_between_times(start_time, end_time):
     # 处理结果
     # for row in result.fetchall():
     #     print(row)
-    print(len(result.fetchall()))
+    # print(len(result.fetchall()))
 
     # 关闭会话
     session.close()
+
+    return result.fetchall()

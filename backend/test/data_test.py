@@ -18,7 +18,9 @@ class MyTestCase(unittest.TestCase):
         # start_time = datetime(2016, 4, 11, 0, 0, 0)
         # end_time = datetime(2016, 4, 11, 0, 0, 2)
 
-        query_data_between_times(start_time, end_time)
+        result = query_data_between_times(start_time, end_time)
+
+        print(len(result))
 
 
 if __name__ == '__main__':

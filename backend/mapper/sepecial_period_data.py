@@ -52,4 +52,6 @@ def query_data_between_times(start_time, end_time):
     # 关闭会话
     session.close()
 
-    print(len(data))
+    # print(len(data))
+
+    return data
