@@ -1,8 +1,10 @@
-import { Rectangle, useMap, useMapEvents } from "react-leaflet";
+import { Rectangle, Tooltip, useMap, useMapEvents } from "react-leaflet";
 import { useEffect, useState } from "react";
+import { cacl_grid_number } from "../utils";
+import AppConfig from "../appConfig";
 
 function Grid(props) {
-  const { rectLength, lngspan, latspan, colors, ...rest } = props;
+  const { rectLength, data, ...rest } = props;
   /*
     将长春市分成网络状的矩形区域，每个矩形区域的宽高为rectLength米
     吉林省 经度121.638964~131.309886	纬度40.864207~46.302152
@@ -10,37 +12,47 @@ function Grid(props) {
     1m=0.00001141经度 1m=0.00000899纬度
    */
   const map = useMap();// useMap、useMapEvents只能在MapContainer的子组件中使用
-  const [lng1, lng2] = lngspan;
-  const [lat1, lat2] = latspan;
-
-  const lngperm = 0.00001141;// 经度方向每增加1m，经度增加的值
-  const latperm = 0.00000899;// 纬度方向每增加1m，纬度增加的值
 
   const [rects, setRects] = useState([]);
 
   const redraw = () => {
-    if (colors.length === 0) return;
+    if (data.length === 0) return;
     const bounds = map.getBounds(); // 当前地图的可视范围，超出范围的矩形不绘制
-    const arr = [];
-    for (let i = Math.max(lng1, bounds.getWest()); i < Math.min(lng2, bounds.getEast()); i += rectLength * lngperm) {
-      for (let j = Math.max(lat1, bounds.getSouth()); j < Math.min(lat2, bounds.getNorth()); j += rectLength * latperm) {
-        arr.push(
-          <Rectangle key={`${i}-${j}`}
-                     bounds={[
-                       [j, i],
-                       [j + rectLength * latperm, i + rectLength * lngperm]
-                     ]}
-                     color="#00000000"
-                     weight={1}
-                     fillColor={colors[arr.length]} />
-        );
-      }
-    }
-    setRects(arr);
+    const arr = data.filter(arr => {
+      const [lngstart, latstart, lngend, latend, level] = arr;
+      const [lngstart1, latstart1, lngend1, latend1] = [
+        Math.min(lngstart, lngend),
+        Math.min(latstart, latend),
+        Math.max(lngstart, lngend),
+        Math.max(latstart, latend)
+      ];
+      return bounds.contains([
+        [latstart1, lngstart1],
+        [latend1, lngend1]
+      ]) || bounds.intersects([
+        [latstart1, lngstart1],
+        [latend1, lngend1]
+      ]);
+    });
+    setRects(arr.map(arr => {
+      const [lngstart, latstart, lngend, latend, level] = arr;
+      return (
+        <Rectangle key={`${lngstart}-${latstart}`}
+                   bounds={[
+                     [latstart, lngstart],
+                     [latend, lngend]
+                   ]}
+                   color="#00000000"
+                   weight={1}
+                   fillColor={AppConfig.colorMap[level]}>
+
+        </Rectangle>
+      );
+    }));
   };
   useEffect(() => {
     redraw();
-  }, [rectLength, colors]);
+  }, [rectLength, data]);
 
   useMapEvents({
     moveend() {

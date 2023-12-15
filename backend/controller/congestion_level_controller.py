@@ -36,6 +36,6 @@ def congestion_level_controller():
     """
     data = request.get_json()
     grid = data['grid']
-    times = data['timespan']
-    response = congestion_level_service(grid, times)
+    timespan = data['timespan']
+    response = congestion_level_service(grid, timespan)
     return Response(json.dumps(response), status=200, mimetype='application/json')

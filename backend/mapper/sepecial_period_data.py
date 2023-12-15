@@ -33,7 +33,7 @@ class period_data(Base):
     id = Column(Integer, primary_key=True)
     tid = Column(String(20))
     time = Column(String(20))
-    lon = Column(String(20))
+    lng = Column(String(20))
     lat = Column(String(20))
     speed = Column(Integer)
     direction = Column(Integer)

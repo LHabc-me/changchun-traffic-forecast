@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react";
-import { Button, Slider } from "@fluentui/react-components";
+import { Button, Input, Slider } from "@fluentui/react-components";
 import Map from "./components/Map";
 import Grid from "./components/Grid";
 import get_congestion_level from "./api/congestion_level";
-import AppConfig from "./appConfig";
+import ControlPanel from "./components/ControlPanel";
 
 function App() {
   const lngspan = [
@@ -14,8 +14,12 @@ function App() {
     43.7325,
     44.00277777777778
   ];
-  const [rectLength, setRectLength] = useState(500);// 矩形宽度 单位：米
-  const [colors, setColors] = useState([]);
+  const [config, setConfig] = useState({
+    rectLength: 500// 矩形宽度 单位：米
+  });
+  const { rectLength } = config;
+  const [gridData, setGridData] = useState([]);
+
   const reload = () => {
     get_congestion_level({
         grid: {
@@ -25,16 +29,12 @@ function App() {
           to: [lngspan[1], latspan[1]]
         },
         timespan: {
-          from: "2020-10-01 00:00:00",
-          to: "2020-10-01 23:59:59"
+          from: "2016-04-11 00:07:03",
+          to: "2016-04-11 00:07:04"
         }
       }
-    ).then(({ data }) => {
-      // setColors(data.map(item => colorMap[item]));
-      setColors(
-        Array.from({ length: 100000 })
-          .map(() => AppConfig.colorMap[Math.floor(Math.random() * 10) + 1])
-      );
+    ).then((result) => {
+      setGridData(result);
     });
   };
   return (
@@ -45,17 +45,15 @@ function App() {
       flexDirection: "row"
     }}>
       <div style={{ flex: 1 }}>
-        <Slider min={100}
-                max={1000}
-                defaultValue={500}
-                value={rectLength}
-                onChange={(_, data) => {
-                  setRectLength(data.value);
-                }} />
-        <div>
-          {rectLength}
-        </div>
-        <Button onClick={reload}>刷新</Button>
+        <ControlPanel style={{
+          height: "100%"
+        }}
+                      config={config}
+                      onConfigChange={(c) => {
+                        setConfig(c);
+                      }}
+                      onConfirm={reload}
+        />
       </div>
       <div style={{
         height: "100%",
@@ -66,9 +64,7 @@ function App() {
           width: "100%"
         }}>
           <Grid rectLength={rectLength}
-                lngspan={lngspan}
-                latspan={latspan}
-                colors={colors} />
+                data={gridData} />
         </Map>
       </div>
     </div>
