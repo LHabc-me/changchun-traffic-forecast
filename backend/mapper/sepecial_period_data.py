@@ -1,6 +1,7 @@
 from sqlalchemy import create_engine, Column, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
+import sqlalchemy as db
 
 """
     从all_data表中查询数据
@@ -18,7 +19,16 @@ from sqlalchemy.orm import sessionmaker
 """
 
 # 创建连接引擎
-engine = create_engine('mysql+pymysql://root:123456@taxi.kina0630.top:3306/db_taxi')
+connect_url = db.engine.url.URL(
+    "mysql+pymysql",
+    username="root",
+    password="123581321Ba@",
+    host="vr2023.top",
+    port=3306,
+    database="taxi",
+    query=dict(charset="utf8mb4"),
+)
+engine = create_engine(connect_url)
 
 # 创建基类
 Base = declarative_base()
@@ -33,7 +43,7 @@ class period_data(Base):
     id = Column(Integer, primary_key=True)
     tid = Column(String(20))
     time = Column(String(20))
-    lng = Column(String(20))
+    lon = Column(String(20))
     lat = Column(String(20))
     speed = Column(Integer)
     direction = Column(Integer)

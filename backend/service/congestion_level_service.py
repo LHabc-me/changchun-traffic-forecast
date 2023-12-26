@@ -6,7 +6,7 @@ import numpy as np
 from flask import Response
 from mapper.sepecial_period_data import query_data_between_times
 
-lngperm = 0.00001141  # 经度方向每增加1m，经度增加的值
+lonperm = 0.00001141  # 经度方向每增加1m，经度增加的值
 latperm = 0.00000899  # 纬度方向每增加1m，纬度增加的值
 
 
@@ -38,17 +38,17 @@ def congestion_level_service(grid, timespan):
     position = {}
 
     for lat in np.arange(fromPoint[1], toPoint[1], rectHeight * latperm):
-        for lng in np.arange(fromPoint[0], toPoint[0], rectWidth * lngperm):
-            grid_number = cacl_grid_number(float(lng) + lngperm * rectWidth / 2,
+        for lon in np.arange(fromPoint[0], toPoint[0], rectWidth * lonperm):
+            grid_number = cacl_grid_number(float(lon) + lonperm * rectWidth / 2,
                                            float(lat) + latperm * rectHeight / 2,
                                            fromPoint, toPoint, rectWidth, rectHeight)
             position[grid_number] \
-                = [lng, lat, lng + rectWidth * lngperm, lat + rectHeight * latperm]
+                = [lon, lat, lon + rectWidth * lonperm, lat + rectHeight * latperm]
 
     for row in query:
         if row.speed == 0:
             continue
-        grid_number = cacl_grid_number(float(row.lng) + lngperm * rectWidth / 2,
+        grid_number = cacl_grid_number(float(row.lon) + lonperm * rectWidth / 2,
                                        float(row.lat) + latperm * rectHeight / 2,
                                        fromPoint, toPoint,
                                        rectWidth, rectHeight)
@@ -58,7 +58,7 @@ def congestion_level_service(grid, timespan):
     result = []
     for key in speed:
         speed[key] = speed[key] / taxi_count[key]
-    for i in range(1, cacl_grid_number(toPoint[0] + lngperm * rectWidth / 2,
+    for i in range(1, cacl_grid_number(toPoint[0] + lonperm * rectWidth / 2,
                                        toPoint[1] + latperm * rectHeight / 2,
                                        fromPoint, toPoint, rectWidth, rectHeight)):
         if position.get(i) is None:
@@ -72,10 +72,10 @@ def congestion_level_service(grid, timespan):
     return result
 
 
-def cacl_grid_number(lng, lat, fromPoint, toPoint, rectWidth, rectHeight):
+def cacl_grid_number(lon, lat, fromPoint, toPoint, rectWidth, rectHeight):
     """
     计算所在网格编号
-    :param lng: 经度
+    :param lon: 经度
     :param lat: 纬度
     :param fromPoint: 起点经纬度
     :param toPoint: 终点经纬度
@@ -84,14 +84,14 @@ def cacl_grid_number(lng, lat, fromPoint, toPoint, rectWidth, rectHeight):
     :return: 网格编号
     """
     # 计算经度方向网格数量
-    lngGridCnt = math.ceil((toPoint[0] - fromPoint[0]) / (rectWidth * lngperm))
+    lonGridCnt = math.ceil((toPoint[0] - fromPoint[0]) / (rectWidth * lonperm))
     # 计算纬度方向网格数量
     latGridCnt = math.ceil((toPoint[1] - fromPoint[1]) / (rectHeight * latperm))
 
     # 计算所在网格编号
-    lngGridNumber = math.ceil((lng - fromPoint[0]) / (rectWidth * lngperm))
+    lonGridNumber = math.ceil((lon - fromPoint[0]) / (rectWidth * lonperm))
     latGridNumber = math.ceil((lat - fromPoint[1]) / (rectHeight * latperm))
 
-    num = (latGridNumber - 1) * lngGridCnt + lngGridNumber
-    assert num > 0, (lng, lat, fromPoint, toPoint, rectWidth, rectHeight)
+    num = (latGridNumber - 1) * lonGridCnt + lonGridNumber
+    assert num > 0, (lon, lat, fromPoint, toPoint, rectWidth, rectHeight)
     return num
