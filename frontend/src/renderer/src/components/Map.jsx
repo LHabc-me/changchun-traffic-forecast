@@ -1,6 +1,6 @@
 import { MapContainer, Rectangle, TileLayer, useMap, useMapEvents } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
-import appConfig from "../appConfig";
+import AppConfig from "../AppConfig";
 
 function Map(props) {
   const { children, ...rest } = props;
@@ -13,8 +13,8 @@ function Map(props) {
                     center={[43.88, 125.35]}
                     zoom={13}
                     scrollWheelZoom={true}>
-        <TileLayer attribution={appConfig.tileMap.attribution}
-                   url={appConfig.tileMap.url} />
+        <TileLayer attribution={AppConfig.tileMap.attribution}
+                   url={AppConfig.tileMap.url} />
         {children}
       </MapContainer>
     </div>

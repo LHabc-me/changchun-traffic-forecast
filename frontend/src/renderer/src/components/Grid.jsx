@@ -1,7 +1,7 @@
 import { Rectangle, Tooltip, useMap, useMapEvents } from "react-leaflet";
 import { useEffect, useState } from "react";
 import { cacl_grid_number } from "../utils";
-import AppConfig from "../appConfig";
+import AppConfig from "../AppConfig";
 
 function Grid(props) {
   const { rectLength, data, ...rest } = props;

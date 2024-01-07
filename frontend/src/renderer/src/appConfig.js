@@ -21,6 +21,10 @@ const AppConfig = {
     8: "rgb(255, 0, 0)",
     9: "rgb(191, 0, 0)",
     10: "rgb(128, 0, 0)"
+  },
+  position: {
+    color: "rgb(0, 255, 0)",
+    opacity: 0.5
   }
 };
 

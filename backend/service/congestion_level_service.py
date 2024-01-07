@@ -1,10 +1,8 @@
-import json
 import math
-import random
-from decimal import Decimal
 import numpy as np
-from flask import Response
-from mapper.sepecial_period_data import query_data_between_times
+from sqlalchemy import text
+
+from service.engine import Session
 
 lonperm = 0.00001141  # 经度方向每增加1m，经度增加的值
 latperm = 0.00000899  # 纬度方向每增加1m，纬度增加的值
@@ -28,7 +26,16 @@ def congestion_level_service(grid, timespan):
     toPoint = grid['to']  # 终点经纬度，如[125.57722222222222, 44.00277777777778]
 
     # 查询指定时间段内的出租车数据
-    query = query_data_between_times(timespan['from'], timespan['to'])
+    session = Session()
+    sql_query = text("SELECT * FROM all_data WHERE time BETWEEN :start_time AND :end_time")
+    query = session.execute(
+        sql_query,
+        {
+            'start_time': timespan['from'],
+            'end_time': timespan['to']
+        }
+    ).fetchall()
+    session.close()
 
     # 计算网格数量
     # result = []

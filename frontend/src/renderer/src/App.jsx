@@ -2,8 +2,10 @@ import { useEffect, useRef, useState } from "react";
 import { Button, Input, Slider } from "@fluentui/react-components";
 import Map from "./components/Map";
 import Grid from "./components/Grid";
-import get_congestion_level from "./api/congestion_level";
+import Position from "./components/Position";
+import { get_congestion_level, get_position } from "./api";
 import ControlPanel from "./components/ControlPanel";
+
 
 function App() {
   const lngspan = [
@@ -15,27 +17,42 @@ function App() {
     44.00277777777778
   ];
   const [config, setConfig] = useState({
-    rectLength: 500// 矩形宽度 单位：米
+    rectLength: 500,// 矩形宽度 单位：米
+    pointSize: 10// 点大小
   });
-  const { rectLength } = config;
+  const { rectLength, pointSize } = config;
   const [gridData, setGridData] = useState([]);
-
+  const [taxiPositionData, setTaxiPositionData] = useState([]);
+  const [showGrid, setShowGrid] = useState(false);
+  const [showTaxiPosition, setShowTaxiPosition] = useState(true);
   const reload = () => {
-    get_congestion_level({
-        grid: {
-          width: rectLength,
-          height: rectLength,
-          from: [lngspan[0], latspan[0]],
-          to: [lngspan[1], latspan[1]]
-        },
+    showTaxiPosition && (
+      get_position({
         timespan: {
-          from: "2016-04-11 00:07:03",
-          to: "2016-04-11 00:07:04"
+          from: "2016-04-11 00:07:00",
+          to: "2016-04-11 00:07:10"
         }
-      }
-    ).then((result) => {
-      setGridData(result);
-    });
+      }).then((result) => {
+        setTaxiPositionData(result);
+      })
+    );
+    showGrid && (
+      get_congestion_level({
+          grid: {
+            width: rectLength,
+            height: rectLength,
+            from: [lngspan[0], latspan[0]],
+            to: [lngspan[1], latspan[1]]
+          },
+          timespan: {
+            from: "2016-04-11 00:07:03",
+            to: "2016-04-11 00:07:04"
+          }
+        }
+      ).then((result) => {
+        setGridData(result);
+      })
+    );
   };
   return (
     <div style={{
@@ -63,8 +80,18 @@ function App() {
           height: "100%",
           width: "100%"
         }}>
-          <Grid rectLength={rectLength}
-                data={gridData} />
+          {
+            showGrid && (
+              <Grid rectLength={rectLength}
+                    data={gridData} />
+            )
+          }
+          {
+            showTaxiPosition && (
+              <Position pointSize={pointSize}
+                        data={taxiPositionData} />
+            )
+          }
         </Map>
       </div>
     </div>
