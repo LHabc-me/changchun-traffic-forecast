@@ -1,10 +1,17 @@
 import { useEffect, useRef, useState } from "react";
-import { Button, Input, Slider } from "@fluentui/react-components";
+import {
+  Button, DrawerBody, DrawerHeader, DrawerHeaderTitle,
+  Input, OverlayDrawer,
+  Slider,
+  Spinner
+} from "@fluentui/react-components";
 import Map from "./components/Map";
 import Grid from "./components/Grid";
 import Position from "./components/Position";
-import { get_congestion_level, get_position } from "./api";
+import { get_grid, get_position, get_street } from "./api";
 import ControlPanel from "./components/ControlPanel";
+import { ArrowLeft24Regular, ArrowRight24Regular, Dismiss24Regular, Settings24Regular } from "@fluentui/react-icons";
+import Street from "./components/Street";
 
 
 function App() {
@@ -16,43 +23,64 @@ function App() {
     43.7325,
     44.00277777777778
   ];
-  const [config, setConfig] = useState({
-    rectLength: 500,// 矩形宽度 单位：米
-    pointSize: 10// 点大小
+  const [configEditing, setConfigEditing] = useState({
+    selectedTab: "grid",
+    grid: {
+      rectLength: 500// 矩形宽度 单位：米
+    },
+    position: {
+      pointSize: 10// 散点大小
+    },
+    street: {},
+    timespan: {
+      from: "2016-04-11 00:00:00",
+      to: "2016-04-11 00:05:00"
+    },
+    ignore: {
+      enable: false,
+      continuousStoppingSeconds: 0
+    }
   });
-  const { rectLength, pointSize } = config;
+  const [config, setConfig] = useState(configEditing);
   const [gridData, setGridData] = useState([]);
   const [taxiPositionData, setTaxiPositionData] = useState([]);
-  const [showGrid, setShowGrid] = useState(false);
-  const [showTaxiPosition, setShowTaxiPosition] = useState(true);
-  const reload = () => {
-    showTaxiPosition && (
-      get_position({
-        timespan: {
-          from: "2016-04-11 00:07:00",
-          to: "2016-04-11 00:07:10"
-        }
-      }).then((result) => {
+  const [streetData, setStreetData] = useState([]);
+  const [isReloading, setIsReloading] = useState(false);
+  const [isConfigPanelOpen, setIsConfigPanelOpen] = useState(true);
+  const reload = async () => {
+    setIsReloading(true);
+    setConfig(configEditing);
+    try {
+      if (configEditing.selectedTab === "position") {
+        const result = await get_position({
+          timespan: configEditing.timespan
+        });
         setTaxiPositionData(result);
-      })
-    );
-    showGrid && (
-      get_congestion_level({
-          grid: {
-            width: rectLength,
-            height: rectLength,
-            from: [lngspan[0], latspan[0]],
-            to: [lngspan[1], latspan[1]]
-          },
-          timespan: {
-            from: "2016-04-11 00:07:03",
-            to: "2016-04-11 00:07:04"
+      }
+
+      if (configEditing.selectedTab === "grid") {
+        const result = await get_grid({
+            grid: {
+              width: configEditing.grid.rectLength,
+              height: configEditing.grid.rectLength,
+              from: [lngspan[0], latspan[0]],
+              to: [lngspan[1], latspan[1]]
+            },
+            timespan: configEditing.timespan
           }
-        }
-      ).then((result) => {
+        );
         setGridData(result);
-      })
-    );
+      }
+
+      if (configEditing.selectedTab === "street") {
+        const result = await get_street({
+          timespan: configEditing.timespan
+        });
+        setStreetData(result);
+      }
+    } finally {
+      setIsReloading(false);
+    }
   };
   return (
     <div style={{
@@ -61,35 +89,90 @@ function App() {
       display: "flex",
       flexDirection: "row"
     }}>
-      <div style={{ flex: 1 }}>
-        <ControlPanel style={{
-          height: "100%"
-        }}
-                      config={config}
-                      onConfigChange={(c) => {
-                        setConfig(c);
-                      }}
-                      onConfirm={reload}
-        />
-      </div>
+
+      {
+        !isConfigPanelOpen && (
+          <div style={{
+            position: "absolute",
+            top: 10,
+            left: 10,
+            zIndex: 1000,
+            backgroundColor: "white",
+            borderRadius: 5
+          }}>
+            <Button icon={<Settings24Regular />}
+                    appearance={"subtle"}
+                    onClick={() => setIsConfigPanelOpen(true)}></Button>
+          </div>
+        )
+      }
+
+      <OverlayDrawer
+        modalType="non-modal"
+        open={isConfigPanelOpen}
+        onOpenChange={(_, { open }) => setIsConfigPanelOpen(open)}
+      >
+        <DrawerBody style={{
+          padding: 10
+        }}>
+          <div>
+            <Button icon={<ArrowLeft24Regular />}
+                    onClick={() => setIsConfigPanelOpen(false)}
+                    appearance={"subtle"}></Button>
+            <div style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 10
+            }}>
+              <ControlPanel config={configEditing}
+                            onConfigChange={(c) => {
+                              setConfigEditing(c);
+                            }}
+                            onConfirm={reload}
+              />
+              <Button onClick={reload}
+                      appearance={"primary"}
+                      style={{
+                        width: "100%"
+                      }}>
+                {
+                  !isReloading && (
+                    "刷新"
+                  )
+                }
+                {
+                  isReloading && (
+                    <Spinner size={"tiny"} />
+                  )
+                }
+              </Button>
+            </div>
+          </div>
+        </DrawerBody>
+      </OverlayDrawer>
       <div style={{
         height: "100%",
-        flex: 10
+        flex: 1
       }}>
         <Map style={{
           height: "100%",
           width: "100%"
         }}>
           {
-            showGrid && (
-              <Grid rectLength={rectLength}
+            config.selectedTab === "grid" && (
+              <Grid rectLength={configEditing.grid.rectLength}
                     data={gridData} />
             )
           }
           {
-            showTaxiPosition && (
-              <Position pointSize={pointSize}
+            config.selectedTab === "position" && (
+              <Position pointSize={configEditing.position.pointSize}
                         data={taxiPositionData} />
+            )
+          }
+          {
+            config.selectedTab === "street" && (
+              <Street data={streetData} />
             )
           }
         </Map>

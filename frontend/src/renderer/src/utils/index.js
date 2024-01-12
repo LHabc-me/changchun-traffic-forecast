@@ -13,4 +13,26 @@ function cacl_grid_number(lon, lat, fromPoint, toPoint, rectWidth, rectHeight) {
   return (latGridNumber - 1) * lngGridCnt + lngGridNumber;
 }
 
-export { cacl_grid_number };
+function setObject(obj, key, value) {
+  const newObj = { ...obj }; // 创建一个新的对象，复制原始对象的值
+
+  const keys = key.split("."); // 将 key 拆分为路径数组
+  let currentObj = newObj;
+
+  for (let i = 0; i < keys.length - 1; i++) {
+    const currentKey = keys[i];
+
+    if (!currentObj[currentKey]) {
+      currentObj[currentKey] = {}; // 如果路径上的对象不存在，创建一个空对象
+    }
+
+    currentObj = currentObj[currentKey]; // 更新当前对象为路径上的对象
+  }
+
+  const lastKey = keys[keys.length - 1];
+  currentObj[lastKey] = value; // 设置最终路径上的值
+
+  return newObj;
+}
+
+export { cacl_grid_number, setObject };

@@ -27,13 +27,13 @@ import axios from "axios";
             ]
         }
  */
-async function get_congestion_level({ grid, timespan }) {
+async function get_grid({ grid, timespan }) {
   const request = {
     grid: grid,
     timespan: timespan
   };
-  const response = await axios.post("/congestion_level", request);
+  const response = await axios.post("/grid", request);
   return response.data;
 }
 
-export default get_congestion_level;
+export default get_grid;

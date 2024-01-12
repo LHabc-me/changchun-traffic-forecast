@@ -1,11 +1,11 @@
 import json
 from flask import Response, request, jsonify, Blueprint
-from service.congestion_level_service import congestion_level_service
+from service.grid_service import grid_service
 
-congestion_level = Blueprint('congestion_level', __name__)
+grid = Blueprint('grid', __name__)
 
 
-@congestion_level.route('/api/congestion_level', methods=['POST'])
+@grid.route('/api/grid', methods=['POST'])
 def congestion_level_controller():
     """
         request:
@@ -37,5 +37,5 @@ def congestion_level_controller():
     data = request.get_json()
     grid = data['grid']
     timespan = data['timespan']
-    response = congestion_level_service(grid, timespan)
+    response = grid_service(grid, timespan)
     return Response(json.dumps(response), status=200, mimetype='application/json')

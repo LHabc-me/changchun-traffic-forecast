@@ -17,9 +17,9 @@ function Position(props) {
     });
 
     // 实心无边框
-    setPoints(arr.map(({ lon, lat }) => {
+    setPoints(arr.map(({ lon, lat }, index) => {
       return (
-        <Circle key={`${lon}-${lat}`}
+        <Circle key={index}
                 center={[lat, lon]}
                 radius={pointSize}
                 fillColor={AppConfig.position.color}

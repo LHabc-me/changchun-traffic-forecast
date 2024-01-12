@@ -1,4 +1,6 @@
-import get_congestion_level from "./congestion_level";
 import get_position from "./position";
+import get_data_timespan from "./data_timespan";
+import get_grid from "./grid";
+import get_street from "./street";
 
-export { get_congestion_level, get_position };
+export { get_grid, get_position, get_data_timespan, get_street };
