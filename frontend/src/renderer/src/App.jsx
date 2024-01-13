@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import {
-  Button, DrawerBody, DrawerHeader, DrawerHeaderTitle,
+  Button, DrawerBody,
   Input, OverlayDrawer,
   Slider,
   Spinner
@@ -8,11 +8,11 @@ import {
 import Map from "./components/Map";
 import Grid from "./components/Grid";
 import Position from "./components/Position";
+import Street from "./components/Street";
 import { get_grid, get_position, get_street } from "./api";
 import ControlPanel from "./components/ControlPanel";
-import { ArrowLeft24Regular, ArrowRight24Regular, Dismiss24Regular, Settings24Regular } from "@fluentui/react-icons";
-import Street from "./components/Street";
-
+import { ArrowLeft24Regular, Settings24Regular } from "@fluentui/react-icons";
+import _ from "lodash";
 
 function App() {
   const lngspan = [
@@ -26,10 +26,10 @@ function App() {
   const [configEditing, setConfigEditing] = useState({
     selectedTab: "grid",
     grid: {
-      rectLength: 500// 矩形宽度 单位：米
+      rectLength: "500"// 矩形宽度 单位：米
     },
     position: {
-      pointSize: 10// 散点大小
+      pointSize: "1"// 散点大小
     },
     street: {},
     timespan: {
@@ -38,7 +38,7 @@ function App() {
     },
     ignore: {
       enable: false,
-      continuousStoppingSeconds: 0
+      continuousStoppingSeconds: "0"
     }
   });
   const [config, setConfig] = useState(configEditing);
@@ -47,15 +47,27 @@ function App() {
   const [streetData, setStreetData] = useState([]);
   const [isReloading, setIsReloading] = useState(false);
   const [isConfigPanelOpen, setIsConfigPanelOpen] = useState(true);
+  const positionRef = useRef(null);
   const reload = async () => {
     setIsReloading(true);
-    setConfig(configEditing);
+    setConfig(_.cloneDeep(configEditing));
     try {
       if (configEditing.selectedTab === "position") {
-        const result = await get_position({
-          timespan: configEditing.timespan
-        });
-        setTaxiPositionData(result);
+        // 如果只修改了pointSize，不需要重新获取数据
+        // 只要修改了其他的，就需要重新获取数据
+        const refetch = async () => {
+          const result = await get_position({
+            timespan: configEditing.timespan
+          });
+          setTaxiPositionData(result);
+        };
+        const newConfig = _.cloneDeep(configEditing);
+        newConfig.position.pointSize = config.position.pointSize;
+        if (!_.isEqual(newConfig, config)) {
+          await refetch();
+        } else {
+          positionRef.current.reload();
+        }
       }
 
       if (configEditing.selectedTab === "grid") {
@@ -167,7 +179,8 @@ function App() {
           {
             config.selectedTab === "position" && (
               <Position pointSize={configEditing.position.pointSize}
-                        data={taxiPositionData} />
+                        data={taxiPositionData}
+                        ref={positionRef} />
             )
           }
           {

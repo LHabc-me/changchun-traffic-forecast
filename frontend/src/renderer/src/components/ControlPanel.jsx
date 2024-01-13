@@ -13,7 +13,7 @@ import { setObject } from "../utils";
 
 function GridConfig(props) {
   const { config, onConfigChange, ...rest } = props;
-  const { rectLength } = config;
+  const { rectLength } = config.grid;
   return (
     <div {...rest}>
       <div>
@@ -33,7 +33,7 @@ function GridConfig(props) {
 
 function PositionConfig(props) {
   const { config, onConfigChange, ...rest } = props;
-  const { pointSize } = config;
+  const { pointSize } = config.position;
   return (
     <div {...rest}>
       <div>
@@ -68,13 +68,13 @@ function formatTime(date) {
 
 function controlPanel(props) {
   const { config, onConfigChange, onConfirm, open, ...rest } = props;
-  const [availableDateSpan, setAvailableDateSpan] = useState(null);
-  useEffect(() => {
-    get_data_timespan()
-      .then((data) => {
-        setAvailableDateSpan(data);
-      });
-  }, []);
+  // const [availableDateSpan, setAvailableDateSpan] = useState(null);
+  // useEffect(() => {
+  //   get_data_timespan()
+  //     .then((data) => {
+  //       setAvailableDateSpan(data);
+  //     });
+  // }, []);
   return (
     <div style={{
       display: "flex",
@@ -96,14 +96,14 @@ function controlPanel(props) {
       </TabList>
       {
         config.selectedTab === "grid" && (
-          <GridConfig config={config.grid}
+          <GridConfig config={config}
                       onConfigChange={onConfigChange}
                       style={{ width: "100%" }} />
         )
       }
       {
         config.selectedTab === "position" && (
-          <PositionConfig config={config.position}
+          <PositionConfig config={config}
                           onConfigChange={onConfigChange}
                           style={{ width: "100%" }} />
         )
@@ -124,11 +124,11 @@ function controlPanel(props) {
         起始时间
         <DatePicker allowTextInput={true}
                     formatDate={formatDate}
-                    value={new Date(config.timespan.from)}
+                    value={new Date(config.timespan.from ?? null)}
                     onChange={(_, data) => {
                       onConfigChange(setObject(config, "timespan.from", `${formatDate(data.value)} ${formatTime(new Date(config.timespan.from))}`));
                     }} />
-        <TimePicker value={formatTime(new Date(config.timespan.from))}
+        <TimePicker value={formatTime(new Date(config.timespan.from ?? null))}
                     onTimeChange={(_, data) => {
                       onConfigChange(setObject(config, "timespan.from", `${formatDate(new Date(config.timespan.from))} ${formatTime(data.selectedTime)}`));
                     }}
@@ -143,11 +143,11 @@ function controlPanel(props) {
         结束时间
         <DatePicker allowTextInput={true}
                     formatDate={formatDate}
-                    value={new Date(config.timespan.to)}
+                    value={new Date(config.timespan.to ?? null)}
                     onChange={(_, data) => {
                       onConfigChange(setObject(config, "timespan.to", `${formatDate(data.value)} ${formatTime(new Date(config.timespan.to))}`));
                     }} />
-        <TimePicker value={formatTime(new Date(config.timespan.to))}
+        <TimePicker value={formatTime(new Date(config.timespan.to ?? null))}
                     onTimeChange={(_, data) => {
                       onConfigChange(setObject(config, "timespan.to", `${formatDate(new Date(config.timespan.to))} ${formatTime(data.selectedTime)}`));
                     }}

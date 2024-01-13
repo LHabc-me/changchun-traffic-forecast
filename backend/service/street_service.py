@@ -40,10 +40,9 @@ def street_service(timespan):
         street_geometry = []
         for j in range(len(geoms)):
             point = geoms[j].split(' ')
-            street_geometry.append([float(point[1]), float(point[0])])  # lat, lon
+            street_geometry.append([float(point[0]), float(point[1])])
         result.append({
             'level': level if level > 0 else 1,
             'street_geometry': street_geometry
         })
-        # print(result[i])
     return result

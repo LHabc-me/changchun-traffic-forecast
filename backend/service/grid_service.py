@@ -1,4 +1,6 @@
 import math
+from datetime import datetime
+
 import numpy as np
 from sqlalchemy import text
 
@@ -20,8 +22,10 @@ def grid_service(grid, timespan):
     toPoint = grid['to']  # 终点经纬度，如[125.57722222222222, 44.00277777777778]
 
     # 查询指定时间段内的出租车数据
+    # 记录时间
+    program_start_time = datetime.now()
     session = Session()
-    sql_query = text("SELECT * FROM all_data WHERE time BETWEEN :start_time AND :end_time")
+    sql_query = text("SELECT speed, lon, lat FROM all_data WHERE time BETWEEN :start_time AND :end_time")
     query = session.execute(
         sql_query,
         {
@@ -30,6 +34,9 @@ def grid_service(grid, timespan):
         }
     ).fetchall()
     session.close()
+
+    # 记录时间
+    program_end_sql_query = datetime.now()
 
     # 计算网格数量
     speed = {}
@@ -55,14 +62,27 @@ def grid_service(grid, timespan):
     for key in speed:
         speed[key] = speed[key] / taxi_count[key]
     for i in range(len(position_map)):
-        level = math.ceil(speed.get(i, 0) / 10) + 1
-        if level > 10:
-            level = 10
-        result.append([position_map[i][0],
-                       position_map[i][1],
-                       position_map[i][2],
-                       position_map[i][3],
-                       level])
+        level = 10 - math.ceil(speed.get(i, 0) / 10)
+        if level < 1 or speed.get(i, 0) == 0:
+            level = 1
+        result.append(
+            {
+                "grid_geometry": [
+                    position_map[i][0],
+                    position_map[i][1],
+                    position_map[i][2],
+                    position_map[i][3],
+                ],
+                "level": level
+            }
+        )
+
+    # 记录时间
+    program_end = datetime.now()
+
+    print(f"程序开始时间：{program_start_time}")
+    print(f"查询数据结束时间：{program_end_sql_query}")
+    print(f"程序结束时间：{program_end}")
 
     return result
 

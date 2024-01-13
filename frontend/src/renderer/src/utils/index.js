@@ -1,3 +1,5 @@
+import _ from "lodash";
+
 function cacl_grid_number(lon, lat, fromPoint, toPoint, rectWidth, rectHeight) {
   const lngperm = 0.00001141;
   const latperm = 0.00000899;
@@ -14,7 +16,7 @@ function cacl_grid_number(lon, lat, fromPoint, toPoint, rectWidth, rectHeight) {
 }
 
 function setObject(obj, key, value) {
-  const newObj = { ...obj }; // 创建一个新的对象，复制原始对象的值
+  const newObj = _.cloneDeep(obj);
 
   const keys = key.split("."); // 将 key 拆分为路径数组
   let currentObj = newObj;

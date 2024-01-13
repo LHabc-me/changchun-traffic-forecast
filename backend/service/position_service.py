@@ -19,5 +19,7 @@ def position_service(timespan):
         }
     ).fetchall()
     session.close()
-    result = [{"lon": i[0], "lat": i[1]} for i in query]
+    result = []
+    for i in range(len(query)):
+        result.append([query[i][0], query[i][1]])
     return result
