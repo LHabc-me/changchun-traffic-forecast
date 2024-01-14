@@ -1,14 +1,22 @@
-import { useContext, useEffect, useRef, useState } from "react";
-import { cacl_grid_number } from "../utils";
+import { useContext, useEffect, useRef } from "react";
 import AppConfig from "../AppConfig";
 import MapContext from "../contexts/MapContext";
-import { Layer, Vector as VectorLayer } from "ol/layer";
+import { Layer } from "ol/layer";
 import { Vector as VectorSource } from "ol/source";
-import WebGLVectorLayerRenderer from "ol/renderer/webgl/VectorLayer";
 import { Feature } from "ol";
-import { LineString, Polygon } from "ol/geom";
-import { Fill, Stroke, Style } from "ol/style";
+import { Polygon } from "ol/geom";
 import { fromLonLat } from "ol/proj";
+import WebGLVectorLayerRenderer from "ol/renderer/webgl/VectorLayer";
+
+class WebGLLayer extends Layer {
+  createRenderer() {
+    return new WebGLVectorLayerRenderer(this, {
+      style: {
+        "fill-color": ["get", "color"]
+      }
+    });
+  }
+}
 
 function Grid(props) {
   const { rectLength, data, ...rest } = props;
@@ -31,14 +39,12 @@ function Grid(props) {
           fromLonLat([fromLon, fromLat])
         ]])
       });
-      feature.setStyle(new Style({
-        fill: new Fill({
-          color: AppConfig.gridColorMap[level]
-        })
-      }));
+      feature.setProperties({
+        color: AppConfig.gridColorMap[level]
+      });
       features.push(feature);
     }
-    layerRef.current = new VectorLayer({
+    layerRef.current = new WebGLLayer({
       source: new VectorSource({
         features
       })

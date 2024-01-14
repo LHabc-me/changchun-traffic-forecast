@@ -25,11 +25,6 @@ function Map(props) {
         zoom: 13
       })
     });
-    //注册地图移动后触发得事件
-    newMap.on("moveend", function(event) {
-      //获取可视化区域得范围
-      console.log(newMap.getView().calculateExtent(newMap.getSize()));
-    });
 
     setMap(newMap);
   }, []);

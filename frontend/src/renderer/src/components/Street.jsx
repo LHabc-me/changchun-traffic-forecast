@@ -1,13 +1,23 @@
-import { useContext, useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useRef } from "react";
 import AppConfig from "../AppConfig";
 import MapContext from "../contexts/MapContext";
-import { Layer, Vector as VectorLayer } from "ol/layer";
+import { Layer } from "ol/layer";
 import { Vector as VectorSource } from "ol/source";
-import WebGLVectorLayerRenderer from "ol/renderer/webgl/VectorLayer";
 import { Feature } from "ol";
 import { LineString } from "ol/geom";
-import { Stroke, Style } from "ol/style";
 import { fromLonLat } from "ol/proj";
+import WebGLVectorLayerRenderer from "ol/renderer/webgl/VectorLayer";
+
+class WebGLLayer extends Layer {
+  createRenderer() {
+    return new WebGLVectorLayerRenderer(this, {
+      style: {
+        "stroke-color": ["get", "color"],
+        "stroke-width": ["get", "width"]
+      }
+    });
+  }
+}
 
 function Street(props) {
   const { data, ...rest } = props;
@@ -17,8 +27,8 @@ function Street(props) {
       {
         level: number,
         street_geometry: [
-          [lng, lat],
-          [lng, lat],
+          [lon, lat],
+          [lon, lat],
           ...
         ],
       },
@@ -35,15 +45,13 @@ function Street(props) {
       const feature = new Feature({
         geometry: new LineString(street_geometry.map(i => fromLonLat(i)))
       });
-      feature.setStyle(new Style({
-        stroke: new Stroke({
-          color: AppConfig.streetColorMap[level],
-          width: 2
-        })
-      }));
+      feature.setProperties({
+        color: AppConfig.streetColorMap[level],
+        width: 2
+      });
       features.push(feature);
     }
-    layerRef.current = new VectorLayer({
+    layerRef.current = new WebGLLayer({
       source: new VectorSource({
         features
       })
