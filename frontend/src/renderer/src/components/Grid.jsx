@@ -60,7 +60,11 @@ function Grid(props) {
   };
 
   useEffect(() => {
-    reload();
+    try {
+      reload();
+    } catch (e) {
+      console.log(e);
+    }
   }, [data]);
 }
 

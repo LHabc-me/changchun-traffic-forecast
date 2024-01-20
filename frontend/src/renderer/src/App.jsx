@@ -13,6 +13,7 @@ import { get_grid, get_position, get_street } from "./api";
 import ControlPanel from "./components/ControlPanel";
 import { ArrowLeft24Regular, Settings24Regular } from "@fluentui/react-icons";
 import _ from "lodash";
+import { formatDate, formatTime, setObject } from "./utils";
 
 function App() {
   const lngspan = [
@@ -31,67 +32,199 @@ function App() {
     position: {
       pointSize: "1"// 散点大小
     },
-    street: {},
+    street: {
+      lineWidth: "2"// 线宽
+    },
     timespan: {
-      from: "2016-04-11 00:00:00",
-      to: "2016-04-11 00:05:00"
+      from: "2016-04-11 07:00:00",
+      to: "2016-04-11 07:30:00"
     },
     ignore: {
       enable: false,
       continuousStoppingSeconds: "0"
+    },
+    autoPlay: {
+      enable: false,
+      frameInterval: "1",// 单位：秒
+      dataInterval: "5" // 单位：分钟
+    }
+  });
+  const [configMessage, setConfigMessage] = useState({
+    autoPlay: {
+      progress: {
+        enable: true,
+        max: 100,
+        value: 0,
+        currentTimespan: {
+          from: null,
+          to: null
+        }
+      }
     }
   });
   const [config, setConfig] = useState(configEditing);
-  const [gridData, setGridData] = useState([]);
-  const [taxiPositionData, setTaxiPositionData] = useState([]);
-  const [streetData, setStreetData] = useState([]);
+  const [data, setData] = useState([]);
   const [isReloading, setIsReloading] = useState(false);
   const [isConfigPanelOpen, setIsConfigPanelOpen] = useState(true);
   const positionRef = useRef(null);
-  const reload = async () => {
+  const streetRef = useRef(null);
+
+  const getParams = ({ timespan }) => {
+    if (configEditing.selectedTab === "grid") {
+      return {
+        grid: {
+          width: configEditing.grid.rectLength,
+          height: configEditing.grid.rectLength,
+          from: [lngspan[0], latspan[0]],
+          to: [lngspan[1], latspan[1]]
+        },
+        timespan
+      };
+    } else if (configEditing.selectedTab === "position") {
+      return {
+        timespan
+      };
+    } else if (configEditing.selectedTab === "street") {
+      return {
+        timespan
+      };
+    }
+  };
+
+  const needRefetch = ({ timespan }) => {
+    const newConfig = _.cloneDeep(configEditing);
+    if (configEditing.selectedTab === "grid") {
+      return true;
+    } else if (configEditing.selectedTab === "position") {
+      newConfig.position.pointSize = config.position.pointSize;
+      return !_.isEqual(newConfig, config) || _.isEqual(configEditing, config);
+    } else if (configEditing.selectedTab === "street") {
+      newConfig.street.lineWidth = config.street.lineWidth;
+      return !_.isEqual(newConfig, config) || _.isEqual(configEditing, config);
+    }
+  };
+
+  const getRef = () => {
+    if (configEditing.selectedTab === "grid") {
+      return null;
+    } else if (configEditing.selectedTab === "position") {
+      return positionRef.current;
+    } else if (configEditing.selectedTab === "street") {
+      return streetRef.current;
+    }
+  };
+
+  const getApi = () => {
+    if (configEditing.selectedTab === "grid") {
+      return get_grid;
+    } else if (configEditing.selectedTab === "position") {
+      return get_position;
+    } else if (configEditing.selectedTab === "street") {
+      return get_street;
+    }
+  };
+
+  const reloadNormal = async ({ timespan }) => {
     setIsReloading(true);
-    setConfig(_.cloneDeep(configEditing));
     try {
-      if (configEditing.selectedTab === "position") {
-        // 如果只修改了pointSize，不需要重新获取数据
-        // 只要修改了其他的，就需要重新获取数据
-        const refetch = async () => {
-          const result = await get_position({
-            timespan: configEditing.timespan
-          });
-          setTaxiPositionData(result);
-        };
-        const newConfig = _.cloneDeep(configEditing);
-        newConfig.position.pointSize = config.position.pointSize;
-        if (!_.isEqual(newConfig, config)) {
-          await refetch();
-        } else {
-          positionRef.current.reload();
-        }
-      }
-
-      if (configEditing.selectedTab === "grid") {
-        const result = await get_grid({
-            grid: {
-              width: configEditing.grid.rectLength,
-              height: configEditing.grid.rectLength,
-              from: [lngspan[0], latspan[0]],
-              to: [lngspan[1], latspan[1]]
-            },
-            timespan: configEditing.timespan
-          }
-        );
-        setGridData(result);
-      }
-
-      if (configEditing.selectedTab === "street") {
-        const result = await get_street({
-          timespan: configEditing.timespan
-        });
-        setStreetData(result);
+      if (needRefetch({ timespan })) {
+        const api = getApi();
+        const params = getParams({ timespan });
+        const data = await api(params);
+        setData(data);
+      } else {
+        getRef()?.reload();
       }
     } finally {
       setIsReloading(false);
+    }
+  };
+
+  const addMinutes = (date, minutes) => {
+    return new Date(date.getTime() + minutes * 60 * 1000);
+  };
+
+  // 算出fromDate到toDate之间有多少个minutes，向上取整
+  const countMinutes = (fromDate, toDate, minutes) => {
+    const diff = toDate.getTime() - fromDate.getTime();
+    const minutesDiff = diff / 1000 / 60;
+    return Math.ceil(minutesDiff / minutes);
+  };
+
+  const [isAutoPlaying, setIsAutoPlaying] = useState(false);
+  const autoPlayInterval = useRef(null);
+  const stopAutoPlay = () => {
+    clearInterval(autoPlayInterval.current);
+    // setConfigMessage(setObject(configMessage, "autoPlay.progress.enable", false));
+    setIsAutoPlaying(false);
+  };
+  const autoPlay = async () => {
+    try {
+      setIsReloading(true);
+      clearInterval(autoPlayInterval.current);
+      const minFrameInterval = configEditing.autoPlay.frameInterval * 1000;
+      const timespanArray = [];
+      const getAllDataPromise = async () => {
+        const result = [];
+        let timespan = {
+          from: new Date(configEditing.timespan.from),
+          to: new Date(configEditing.timespan.to)
+        };
+        const api = getApi();
+        const resultLength = countMinutes(timespan.from, timespan.to, configEditing.autoPlay.dataInterval);
+        for (let i = 0; i < resultLength; i++) {
+          const span = {
+            from: `${formatDate(timespan.from)} ${formatTime(timespan.from)}`,
+            to: `${formatDate(timespan.to)} ${formatTime(timespan.to)}`
+          };
+          timespanArray.push(span);
+          const dataPromise = api(getParams({
+            timespan: span
+          }));
+          result.push(dataPromise);
+          timespan.from = addMinutes(timespan.from, configEditing.autoPlay.dataInterval);
+          timespan.to = addMinutes(timespan.to, configEditing.autoPlay.dataInterval);
+        }
+        return result;
+      };
+      const promiseArray = await getAllDataPromise();
+      const dataArray = await Promise.all(promiseArray);
+      setIsAutoPlaying(true);
+      let count = 0;
+      let message = _.cloneDeep(configMessage);
+      message.autoPlay.progress.max = dataArray.length;
+      setConfigMessage(message);
+      const nextFrame = () => {
+        try {
+          const data = dataArray.shift();
+          message.autoPlay.progress.value = ++count;
+          message.autoPlay.progress.currentTimespan = timespanArray.shift();
+          setConfigMessage(message);
+          setData(data);
+          if (dataArray.length === 0) {
+            stopAutoPlay();
+          }
+        } catch (e) {
+          stopAutoPlay();
+        }
+      };
+      nextFrame();
+      // message.autoPlay.progress.enable = true;
+      // setConfigMessage(message);
+      autoPlayInterval.current = setInterval(nextFrame, minFrameInterval);
+    } finally {
+      setIsReloading(false);
+    }
+  };
+
+  const reload = async () => {
+    setConfig(_.cloneDeep(configEditing));
+    if (configEditing.autoPlay.enable) {
+      await autoPlay();
+    } else {
+      await reloadNormal({
+        timespan: configEditing.timespan
+      });
     }
   };
   return (
@@ -137,27 +270,43 @@ function App() {
               gap: 10
             }}>
               <ControlPanel config={configEditing}
+                            message={configMessage}
                             onConfigChange={(c) => {
                               setConfigEditing(c);
                             }}
-                            onConfirm={reload}
               />
-              <Button onClick={reload}
-                      appearance={"primary"}
-                      style={{
-                        width: "100%"
-                      }}>
-                {
-                  !isReloading && (
-                    "刷新"
-                  )
-                }
-                {
-                  isReloading && (
-                    <Spinner size={"tiny"} />
-                  )
-                }
-              </Button>
+              {
+                !isAutoPlaying && (
+                  <Button onClick={reload}
+                          appearance={"primary"}
+                          style={{
+                            width: "100%"
+                          }}>
+                    {
+                      !isReloading && (
+                        "刷新"
+                      )
+                    }
+                    {
+                      isReloading && (
+                        <Spinner size={"tiny"} />
+                      )
+                    }
+                  </Button>
+                )
+              }
+              {
+                isAutoPlaying && (
+                  <Button onClick={stopAutoPlay}
+                          appearance={"primary"}
+                          style={{
+                            width: "100%",
+                            backgroundColor: "#c50f1f"
+                          }}>
+                    停止
+                  </Button>
+                )
+              }
             </div>
           </div>
         </DrawerBody>
@@ -173,19 +322,21 @@ function App() {
           {
             config.selectedTab === "grid" && (
               <Grid rectLength={configEditing.grid.rectLength}
-                    data={gridData} />
+                    data={data} />
             )
           }
           {
             config.selectedTab === "position" && (
               <Position pointSize={configEditing.position.pointSize}
-                        data={taxiPositionData}
+                        data={data}
                         ref={positionRef} />
             )
           }
           {
             config.selectedTab === "street" && (
-              <Street data={streetData} />
+              <Street lineWidth={configEditing.street.lineWidth}
+                      data={data}
+                      ref={streetRef} />
             )
           }
         </Map>

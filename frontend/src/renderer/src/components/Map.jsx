@@ -23,7 +23,8 @@ function Map(props) {
         projection: "EPSG:3857",
         center: fromLonLat([125.3180852891106, 43.88444655236956]),
         zoom: 13
-      })
+      }),
+      controls: []
     });
 
     setMap(newMap);

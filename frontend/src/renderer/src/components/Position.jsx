@@ -41,7 +41,11 @@ const Position = forwardRef((props, ref) => {
   };
   useImperativeHandle(ref, () => ({ reload }));
   useEffect(() => {
-    reload();
+    try {
+      reload();
+    } catch (e) {
+      console.log(e);
+    }
   }, [data]);
 });
 

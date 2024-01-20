@@ -37,4 +37,12 @@ function setObject(obj, key, value) {
   return newObj;
 }
 
-export { cacl_grid_number, setObject };
+function formatDate(date) {
+  return `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
+}
+
+function formatTime(date) {
+  return date.toTimeString().split(" ")[0];
+}
+
+export { cacl_grid_number, setObject, formatDate, formatTime };

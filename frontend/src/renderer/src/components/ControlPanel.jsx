@@ -1,18 +1,16 @@
 import {
-  Button, Checkbox,
-  Input,
-  Slider,
+  Checkbox, Field,
+  Input, ProgressBar,
+  Select,
   Tab,
   TabList
 } from "@fluentui/react-components";
-import { TimePicker } from "@fluentui/react-timepicker-compat-preview";
+import { TimePicker } from "@fluentui/react-timepicker-compat";
 import { DatePicker } from "@fluentui/react-datepicker-compat";
-import { useEffect, useState } from "react";
-import { get_data_timespan } from "../api";
-import { setObject } from "../utils";
+import { setObject, formatDate, formatTime } from "../utils";
 
 function GridConfig(props) {
-  const { config, onConfigChange, ...rest } = props;
+  const { config, message, onConfigChange, ...rest } = props;
   const { rectLength } = config.grid;
   return (
     <div {...rest}>
@@ -32,7 +30,7 @@ function GridConfig(props) {
 
 
 function PositionConfig(props) {
-  const { config, onConfigChange, ...rest } = props;
+  const { config, message, onConfigChange, ...rest } = props;
   const { pointSize } = config.position;
   return (
     <div {...rest}>
@@ -51,30 +49,143 @@ function PositionConfig(props) {
 }
 
 function StreetConfig(props) {
-  const { config, onConfigChange, ...rest } = props;
+  const { config, message, onConfigChange, ...rest } = props;
+  const { lineWidth } = config.street;
   return (
     <div {...rest}>
+      <div>
+        <div>
+          线宽
+        </div>
+        <Input value={lineWidth}
+               style={{ width: "100%" }}
+               onChange={(_, data) => {
+                 onConfigChange(setObject(config, "street.lineWidth", data.value));
+               }} />
+      </div>
     </div>
   );
 }
 
-function formatDate(date) {
-  return `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
+function AutoPlayConfig(props) {
+  const { config, message, onConfigChange, ...rest } = props;
+  return (
+    <div {...rest}>
+      <div style={{
+        display: "flex",
+        flexDirection: "row",
+        alignItems: "center"
+      }}>
+        <div style={{ flex: 1 }}>
+          <Checkbox value={config.autoPlay.enable}
+                    onChange={(_, data) => {
+                      onConfigChange(setObject(config, "autoPlay.enable", data.checked));
+                    }} />
+          自动播放
+        </div>
+        <div style={{ flex: 2 }}>
+          {
+            message.autoPlay.progress.enable && (
+              <Field validationMessage={`当前进度：${message.autoPlay.progress.currentTimespan.from ?? "未开始"}`}
+                     validationState="none">
+                <ProgressBar max={Number.parseInt(message.autoPlay.progress.max)}
+                             value={Number.parseInt(message.autoPlay.progress.value)} />
+              </Field>
+            )
+          }
+        </div>
+      </div>
+      <div style={{
+        marginLeft: 20
+      }}>
+        <div>
+          每帧最短间隔时间(秒)
+          <Select value={config.autoPlay.frameInterval}
+                  onChange={(_, data) => {
+                    onConfigChange(setObject(config, "autoPlay.frameInterval", data.value));
+                  }}>
+            <option>1</option>
+            <option>3</option>
+            <option>5</option>
+          </Select>
+        </div>
+        <div>
+          每帧数据量(分钟)
+          <Select value={config.autoPlay.dataInterval}
+                  onChange={(_, data) => {
+                    onConfigChange(setObject(config, "autoPlay.dataInterval", data.value));
+                  }}>
+            <option>5</option>
+            <option>10</option>
+            <option>30</option>
+          </Select>
+        </div>
+      </div>
+    </div>
+  );
 }
 
-function formatTime(date) {
-  return date.toTimeString().split(" ")[0];
+function BasicConfig(props) {
+  const { config, message, onConfigChange, ...rest } = props;
+  return (
+    <div {...rest}>
+      <div style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: 3
+      }}>
+        <div style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: 3
+        }}>
+          起始时间
+          <DatePicker allowTextInput={true}
+                      formatDate={formatDate}
+                      value={new Date(config.timespan.from ?? null)}
+                      onChange={(_, data) => {
+                        onConfigChange(setObject(config, "timespan.from", `${formatDate(data.value)} ${formatTime(new Date(config.timespan.from))}`));
+                      }} />
+          <TimePicker value={formatTime(new Date(config.timespan.from ?? null))}
+                      onTimeChange={(_, data) => {
+                        console.log(data.selectedTime);
+                        onConfigChange(setObject(config, "timespan.from", `${formatDate(new Date(config.timespan.from))} ${formatTime(data.selectedTime)}`));
+                      }}
+                      freeform={true}
+                      increment={5} />
+        </div>
+        <div style={{
+          width: "100%",
+          display: "flex",
+          flexDirection: "column",
+          gap: 3
+        }}>
+          结束时间
+          <DatePicker allowTextInput={true}
+                      formatDate={formatDate}
+                      value={new Date(config.timespan.to ?? null)}
+                      onChange={(_, data) => {
+                        onConfigChange(setObject(config, "timespan.to", `${formatDate(data.value)} ${formatTime(new Date(config.timespan.to))}`));
+                      }} />
+          <TimePicker value={formatTime(new Date(config.timespan.to ?? null))}
+                      onTimeChange={(_, data) => {
+                        onConfigChange(setObject(config, "timespan.to", `${formatDate(new Date(config.timespan.to))} ${formatTime(data.selectedTime)}`));
+                      }}
+                      increment={5} />
+        </div>
+      </div>
+    </div>
+  );
 }
+
 
 function controlPanel(props) {
-  const { config, onConfigChange, onConfirm, open, ...rest } = props;
-  // const [availableDateSpan, setAvailableDateSpan] = useState(null);
-  // useEffect(() => {
-  //   get_data_timespan()
-  //     .then((data) => {
-  //       setAvailableDateSpan(data);
-  //     });
-  // }, []);
+  const { config, message, onConfigChange, open, ...rest } = props;
+  // const configBasicProps = {
+  //   style: { width: "100%" },
+  //   config: { config },
+  //   message: { message }
+  // };
   return (
     <div style={{
       display: "flex",
@@ -97,6 +208,7 @@ function controlPanel(props) {
       {
         config.selectedTab === "grid" && (
           <GridConfig config={config}
+                      message={message}
                       onConfigChange={onConfigChange}
                       style={{ width: "100%" }} />
         )
@@ -104,6 +216,7 @@ function controlPanel(props) {
       {
         config.selectedTab === "position" && (
           <PositionConfig config={config}
+                          message={message}
                           onConfigChange={onConfigChange}
                           style={{ width: "100%" }} />
         )
@@ -111,61 +224,19 @@ function controlPanel(props) {
       {
         config.selectedTab === "street" && (
           <StreetConfig config={config}
+                        message={message}
                         onConfigChange={onConfigChange}
                         style={{ width: "100%" }} />
         )
       }
-      <div style={{
-        width: "100%",
-        display: "flex",
-        flexDirection: "column",
-        gap: 3
-      }}>
-        起始时间
-        <DatePicker allowTextInput={true}
-                    formatDate={formatDate}
-                    value={new Date(config.timespan.from ?? null)}
-                    onChange={(_, data) => {
-                      onConfigChange(setObject(config, "timespan.from", `${formatDate(data.value)} ${formatTime(new Date(config.timespan.from))}`));
-                    }} />
-        <TimePicker value={formatTime(new Date(config.timespan.from ?? null))}
-                    onTimeChange={(_, data) => {
-                      onConfigChange(setObject(config, "timespan.from", `${formatDate(new Date(config.timespan.from))} ${formatTime(data.selectedTime)}`));
-                    }}
-                    increment={5} />
-      </div>
-      <div style={{
-        width: "100%",
-        display: "flex",
-        flexDirection: "column",
-        gap: 3
-      }}>
-        结束时间
-        <DatePicker allowTextInput={true}
-                    formatDate={formatDate}
-                    value={new Date(config.timespan.to ?? null)}
-                    onChange={(_, data) => {
-                      onConfigChange(setObject(config, "timespan.to", `${formatDate(data.value)} ${formatTime(new Date(config.timespan.to))}`));
-                    }} />
-        <TimePicker value={formatTime(new Date(config.timespan.to ?? null))}
-                    onTimeChange={(_, data) => {
-                      onConfigChange(setObject(config, "timespan.to", `${formatDate(new Date(config.timespan.to))} ${formatTime(data.selectedTime)}`));
-                    }}
-                    increment={5} />
-      </div>
-      <div style={{
-        width: "100%",
-        display: "flex",
-        flexDirection: "row",
-        alignItems: "center"
-      }}>
-        <Checkbox />
-        <div>
-          忽略连续停留时间大于
-          <Input style={{ width: 55 }} />
-          秒的数据
-        </div>
-      </div>
+      <BasicConfig style={{ width: "100%" }}
+                   config={config}
+                   message={message}
+                   onConfigChange={onConfigChange} />
+      <AutoPlayConfig style={{ width: "100%" }}
+                      config={config}
+                      message={message}
+                      onConfigChange={onConfigChange} />
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { useContext, useEffect, useRef } from "react";
+import { forwardRef, useContext, useEffect, useImperativeHandle, useRef } from "react";
 import AppConfig from "../AppConfig";
 import MapContext from "../contexts/MapContext";
 import { Layer } from "ol/layer";
@@ -19,8 +19,8 @@ class WebGLLayer extends Layer {
   }
 }
 
-function Street(props) {
-  const { data, ...rest } = props;
+const Street = forwardRef((props, ref) => {
+  const { data, lineWidth, ...rest } = props;
   const map = useContext(MapContext);
   /*
     data的格式：[
@@ -47,7 +47,7 @@ function Street(props) {
       });
       feature.setProperties({
         color: AppConfig.streetColorMap[level],
-        width: 2
+        width: Number.parseFloat(lineWidth)
       });
       features.push(feature);
     }
@@ -66,9 +66,15 @@ function Street(props) {
     map.addLayer(layerRef.current);
   };
 
+  useImperativeHandle(ref, () => ({ reload }));
+
   useEffect(() => {
-    reload();
+    try {
+      reload();
+    } catch (e) {
+      console.log(e);
+    }
   }, [data]);
-}
+});
 
 export default Street;
