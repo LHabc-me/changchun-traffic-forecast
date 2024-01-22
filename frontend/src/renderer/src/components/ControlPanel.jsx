@@ -63,6 +63,34 @@ function StreetConfig(props) {
                  onConfigChange(setObject(config, "street.lineWidth", data.value));
                }} />
       </div>
+      <div>
+        <div>
+          分割道路
+        </div>
+        <div>
+          <Select
+            value={
+              (config.street.split.mode === null && "不分割") ||
+              (config.street.split.mode === "500" && "每隔500米分割") ||
+              (config.street.split.mode === "1000" && "每隔1000米分割")
+            }
+            onChange={(_, data) => {
+              let mode = null;
+              if (data.value === "不分割") {
+                mode = null;
+              } else if (data.value === "每隔500米分割") {
+                mode = "500";
+              } else if (data.value === "每隔1000米分割") {
+                mode = "1000";
+              }
+              onConfigChange(setObject(config, "street.split.mode", mode));
+            }}>
+            <option>不分割</option>
+            <option>每隔500米分割</option>
+            <option>每隔1000米分割</option>
+          </Select>
+        </div>
+      </div>
     </div>
   );
 }

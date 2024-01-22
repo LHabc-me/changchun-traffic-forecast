@@ -9,5 +9,6 @@ street = Blueprint('street', __name__)
 def position_controller():
     data = request.get_json()
     timespan = data['timespan']
-    response = street_service(timespan)
+    split_mode = data['split']['mode']
+    response = street_service(timespan, split_mode)
     return Response(json.dumps(response), status=200, mimetype='application/json')

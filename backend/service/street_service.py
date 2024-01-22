@@ -5,25 +5,28 @@ from sqlalchemy import text
 from service.engine import Session
 
 
-def street_service(timespan):
+def street_service(timespan, split_mode):
     """
     获取时间段内的位置信息
     :param timespan: 时间段
+    :param split_mode: 分割模式
     """
     session = Session()
-    sql = text("""
+    table_name = switch_table(split_mode)
+    fk = get_street_table_pkname(table_name)
+    sql = text(f"""
     select 
         avg(ad."speed") as speed,
         (
-            select SUBSTRING(ST_AsText(l.wkb_geometry), 12, length(ST_AsText(l.wkb_geometry)) - 12) from lines l 
-            where ad.ogc_fid = l.ogc_fid
+            select SUBSTRING(ST_AsText(l.wkb_geometry), 12, length(ST_AsText(l.wkb_geometry)) - 12) from {table_name} l 
+            where ad.{fk} = l.{fk}
         ) as street_geometry 
     from all_data ad
     where 
             ad."time" between :start_time and :end_time
         and 
             ad."speed" > 0
-    group by ad.ogc_fid
+    group by ad.{fk}
     """)  # LINESTRING长度为12
     query = session.execute(
         sql,
@@ -46,3 +49,25 @@ def street_service(timespan):
             'street_geometry': street_geometry
         })
     return result
+
+
+def switch_table(split_mode):
+    if split_mode is None:
+        return 'lines'
+    elif split_mode == '500':
+        return 'lines500'
+    elif split_mode == '1000':
+        return 'lines1000'
+    else:
+        return f'lines{split_mode}'
+
+
+def get_street_table_pkname(table_name):
+    if table_name == 'lines':
+        return 'ogc_fid'
+    elif table_name == 'lines500':
+        return 'lines500_id'
+    elif table_name == 'lines1000':
+        return 'lines1000_id'
+    else:
+        return f'{table_name}_id'

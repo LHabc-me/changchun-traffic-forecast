@@ -33,7 +33,10 @@ function App() {
       pointSize: "1"// 散点大小
     },
     street: {
-      lineWidth: "2"// 线宽
+      lineWidth: "2",// 线宽
+      split: {
+        mode: null
+      }
     },
     timespan: {
       from: "2016-04-11 07:00:00",
@@ -69,7 +72,7 @@ function App() {
   const positionRef = useRef(null);
   const streetRef = useRef(null);
 
-  const getParams = ({ timespan }) => {
+  const getApiParams = ({ timespan }) => {
     if (configEditing.selectedTab === "grid") {
       return {
         grid: {
@@ -86,7 +89,10 @@ function App() {
       };
     } else if (configEditing.selectedTab === "street") {
       return {
-        timespan
+        timespan,
+        split: {
+          mode: configEditing.street.split.mode
+        }
       };
     }
   };
@@ -129,7 +135,7 @@ function App() {
     try {
       if (needRefetch({ timespan })) {
         const api = getApi();
-        const params = getParams({ timespan });
+        const params = getApiParams({ timespan });
         const data = await api(params);
         setData(data);
       } else {
@@ -178,7 +184,7 @@ function App() {
             to: `${formatDate(timespan.to)} ${formatTime(timespan.to)}`
           };
           timespanArray.push(span);
-          const dataPromise = api(getParams({
+          const dataPromise = api(getApiParams({
             timespan: span
           }));
           result.push(dataPromise);

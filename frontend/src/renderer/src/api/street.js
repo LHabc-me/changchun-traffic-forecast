@@ -1,8 +1,9 @@
 import axios from "axios";
 
-async function get_street({ timespan }) {
+async function get_street({ timespan, split }) {
   const request = {
-    timespan
+    timespan,
+    split
   };
   const response = await axios.post("/street", request);
   return response.data;
