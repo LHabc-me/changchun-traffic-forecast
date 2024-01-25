@@ -3,6 +3,7 @@ import numpy as np
 from datetime import datetime
 from sqlalchemy import text
 from service.engine import Session
+from service.get_level import get_level
 
 lonperm = 0.00001141  # 经度方向每增加1m，经度增加的值
 latperm = 0.00000899  # 纬度方向每增加1m，纬度增加的值
@@ -55,8 +56,7 @@ def grid_service(grid, timespan):
     # 计算拥堵指数
     result = []
     for i in range(len(position_map)):
-        level = 10 - np.ceil(speed[i] / 10)
-        level = max(1, level) if speed[i] != 0 else 1
+        level = get_level(speed[i])
         result.append(
             {
                 "grid_geometry": list(position_map[i]),

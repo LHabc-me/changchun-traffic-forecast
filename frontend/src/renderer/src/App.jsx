@@ -9,6 +9,7 @@ import Map from "./components/Map";
 import Grid from "./components/Grid";
 import Position from "./components/Position";
 import Street from "./components/Street";
+import Legend from "./components/Legend";
 import { get_grid, get_position, get_street } from "./api";
 import ControlPanel from "./components/ControlPanel";
 import { ArrowLeft24Regular, Settings24Regular } from "@fluentui/react-icons";
@@ -240,7 +241,6 @@ function App() {
       display: "flex",
       flexDirection: "row"
     }}>
-
       {
         !isConfigPanelOpen && (
           <div style={{
@@ -347,6 +347,20 @@ function App() {
           }
         </Map>
       </div>
+
+      {
+        config.selectedTab === "grid" || config.selectedTab === "street" && (
+          <div style={{
+            position: "absolute",
+            right: 0,
+            bottom: 0,
+            zIndex: 1000,
+            backgroundColor: "#f7f7f7"
+          }}>
+            <Legend type={config.selectedTab} />
+          </div>
+        )
+      }
     </div>
   );
 }

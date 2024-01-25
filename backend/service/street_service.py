@@ -3,6 +3,7 @@ from math import floor
 from sqlalchemy import text
 
 from service.engine import Session
+from service.get_level import get_level
 
 
 def street_service(timespan, split_mode):
@@ -38,7 +39,7 @@ def street_service(timespan, split_mode):
     session.close()
     result = []
     for i in range(len(query)):
-        level = floor(10 - (query[i][0] / 10))
+        level = get_level(query[i][0])
         geoms = query[i][1].split(',')
         street_geometry = []
         for j in range(len(geoms)):
