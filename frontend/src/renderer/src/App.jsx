@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import {
   Button, DrawerBody,
   Input, OverlayDrawer,
@@ -10,13 +10,16 @@ import Grid from "./components/Grid";
 import Position from "./components/Position";
 import Street from "./components/Street";
 import Legend from "./components/Legend";
-import { get_grid, get_position, get_street } from "./api";
+import { get_charts_option, get_grid, get_position, get_street } from "./api";
 import ControlPanel from "./components/ControlPanel";
 import { ArrowLeft24Regular, Settings24Regular } from "@fluentui/react-icons";
 import _ from "lodash";
 import { formatDate, formatTime, setObject } from "./utils";
+import Charts from "./components/Charts";
+import ToastContext from "./contexts/ToastContext";
 
 function App() {
+  const toast = useContext(ToastContext);
   const lngspan = [
     125.10861111111111,
     125.57722222222222
@@ -38,6 +41,9 @@ function App() {
       split: {
         mode: null
       }
+    },
+    charts: {
+      type: "行驶方向统计"
     },
     timespan: {
       from: "2016-04-11 07:00:00",
@@ -68,6 +74,7 @@ function App() {
   });
   const [config, setConfig] = useState(configEditing);
   const [data, setData] = useState([]);
+  const [dataType, setDataType] = useState(null);
   const [isReloading, setIsReloading] = useState(false);
   const [isConfigPanelOpen, setIsConfigPanelOpen] = useState(true);
   const positionRef = useRef(null);
@@ -95,6 +102,11 @@ function App() {
           mode: configEditing.street.split.mode
         }
       };
+    } else if (configEditing.selectedTab === "charts") {
+      return {
+        timespan,
+        type: configEditing.charts.type
+      };
     }
   };
 
@@ -108,6 +120,8 @@ function App() {
     } else if (configEditing.selectedTab === "street") {
       newConfig.street.lineWidth = config.street.lineWidth;
       return !_.isEqual(newConfig, config) || _.isEqual(configEditing, config);
+    } else {
+      return true;
     }
   };
 
@@ -118,6 +132,8 @@ function App() {
       return positionRef.current;
     } else if (configEditing.selectedTab === "street") {
       return streetRef.current;
+    } else {
+      return null;
     }
   };
 
@@ -128,6 +144,8 @@ function App() {
       return get_position;
     } else if (configEditing.selectedTab === "street") {
       return get_street;
+    } else if (configEditing.selectedTab === "charts") {
+      return get_charts_option;
     }
   };
 
@@ -137,11 +155,14 @@ function App() {
       if (needRefetch({ timespan })) {
         const api = getApi();
         const params = getApiParams({ timespan });
-        const data = await api(params);
+        const { data, type } = await api(params);
+        setDataType(type);
         setData(data);
       } else {
         getRef()?.reload();
       }
+    } catch (e) {
+      toast.error("数据加载失败");
     } finally {
       setIsReloading(false);
     }
@@ -219,6 +240,8 @@ function App() {
       // message.autoPlay.progress.enable = true;
       // setConfigMessage(message);
       autoPlayInterval.current = setInterval(nextFrame, minFrameInterval);
+    } catch (e) {
+      toast.error("数据加载失败");
     } finally {
       setIsReloading(false);
     }
@@ -226,7 +249,8 @@ function App() {
 
   const reload = async () => {
     setConfig(_.cloneDeep(configEditing));
-    if (configEditing.autoPlay.enable) {
+    if (configEditing.autoPlay.enable &&
+      ["grid", "position", "street"].includes(configEditing.selectedTab)) {
       await autoPlay();
     } else {
       await reloadNormal({
@@ -258,11 +282,9 @@ function App() {
         )
       }
 
-      <OverlayDrawer
-        modalType="non-modal"
-        open={isConfigPanelOpen}
-        onOpenChange={(_, { open }) => setIsConfigPanelOpen(open)}
-      >
+      <OverlayDrawer modalType="non-modal"
+                     open={isConfigPanelOpen}
+                     onOpenChange={(_, { open }) => setIsConfigPanelOpen(open)}>
         <DrawerBody style={{
           padding: 10
         }}>
@@ -321,35 +343,48 @@ function App() {
         height: "100%",
         flex: 1
       }}>
-        <Map style={{
-          height: "100%",
-          width: "100%"
-        }}>
-          {
-            config.selectedTab === "grid" && (
-              <Grid rectLength={configEditing.grid.rectLength}
-                    data={data} />
-            )
-          }
-          {
-            config.selectedTab === "position" && (
-              <Position pointSize={configEditing.position.pointSize}
-                        data={data}
-                        ref={positionRef} />
-            )
-          }
-          {
-            config.selectedTab === "street" && (
-              <Street lineWidth={configEditing.street.lineWidth}
-                      data={data}
-                      ref={streetRef} />
-            )
-          }
-        </Map>
+        {
+          ["grid", "position", "street"].includes(config.selectedTab) && (
+            <Map style={{
+              height: "100%",
+              width: "100%"
+            }}>
+              {
+                config.selectedTab === "grid" && (
+                  <Grid rectLength={configEditing.grid.rectLength}
+                        data={dataType === "grid" ? data : null} />
+                )
+              }
+              {
+                config.selectedTab === "position" && (
+                  <Position pointSize={configEditing.position.pointSize}
+                            data={dataType === "position" ? data : null}
+                            ref={positionRef} />
+                )
+              }
+              {
+                config.selectedTab === "street" && (
+                  <Street lineWidth={configEditing.street.lineWidth}
+                          data={dataType === "street" ? data : null}
+                          ref={streetRef} />
+                )
+              }
+            </Map>
+          )
+        }
+        {
+          config.selectedTab === "charts" && (
+            <Charts style={{
+              height: "100%",
+              width: "100%"
+            }}
+                    option={dataType === "charts_option" ? JSON.parse(data) : null} />
+          )
+        }
       </div>
 
       {
-        config.selectedTab === "grid" || config.selectedTab === "street" && (
+        (config.selectedTab === "grid" || config.selectedTab === "street") && (
           <div style={{
             position: "absolute",
             right: 0,

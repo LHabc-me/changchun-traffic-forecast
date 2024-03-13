@@ -1,6 +1,6 @@
 from sqlalchemy import text
 
-from service.engine import Session
+from dao.engine import Session
 
 
 def data_timespan_service():

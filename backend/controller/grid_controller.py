@@ -38,4 +38,8 @@ def congestion_level_controller():
     grid = data['grid']
     timespan = data['timespan']
     response = grid_service(grid, timespan)
+    response = {
+        "type": "grid",
+        "data": response
+    }
     return Response(json.dumps(response), status=200, mimetype='application/json')

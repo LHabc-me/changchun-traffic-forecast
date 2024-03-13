@@ -4,9 +4,12 @@ import App from "./App";
 import { FluentProvider, webLightTheme } from "@fluentui/react-components";
 import "./assets/index.css";
 import "./appConfig";
+import ToastContext, { ToastProvider } from "./contexts/ToastContext";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <FluentProvider theme={webLightTheme}>
-    <App />
+    <ToastProvider value={ToastContext.toast}>
+      <App />
+    </ToastProvider>
   </FluentProvider>
 );

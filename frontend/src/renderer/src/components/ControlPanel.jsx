@@ -1,12 +1,13 @@
 import {
-  Checkbox, Field,
+  Button,
+  Checkbox, CompoundButton, Field,
   Input, ProgressBar,
   Select,
   Tab,
   TabList
 } from "@fluentui/react-components";
 import { TimePicker } from "@fluentui/react-timepicker-compat";
-import { DatePicker } from "@fluentui/react-datepicker-compat";
+import { DatePicker, defaultDatePickerStrings } from "@fluentui/react-datepicker-compat";
 import { setObject, formatDate, formatTime } from "../utils";
 
 function GridConfig(props) {
@@ -155,6 +156,49 @@ function AutoPlayConfig(props) {
 
 function BasicConfig(props) {
   const { config, message, onConfigChange, ...rest } = props;
+  const datePickerLocaleStrings = {
+    ...defaultDatePickerStrings,
+    days: [
+      "星期日",
+      "星期一",
+      "星期二",
+      "星期三",
+      "星期四",
+      "星期五",
+      "星期六"
+    ],
+    shortDays: ["日", "一", "二", "三", "四", "五", "六"],
+    months: [
+      "一月",
+      "二月",
+      "三月",
+      "四月",
+      "五月",
+      "六月",
+      "七月",
+      "八月",
+      "九月",
+      "十月",
+      "十一月",
+      "十二月"
+    ],
+
+    shortMonths: [
+      "一月",
+      "二月",
+      "三月",
+      "四月",
+      "五月",
+      "六月",
+      "七月",
+      "八月",
+      "九月",
+      "十月",
+      "十一月",
+      "十二月"
+    ],
+    goToToday: "今天"
+  };
   return (
     <div {...rest}>
       <div style={{
@@ -169,6 +213,7 @@ function BasicConfig(props) {
         }}>
           起始时间
           <DatePicker allowTextInput={true}
+                      strings={datePickerLocaleStrings}
                       formatDate={formatDate}
                       value={new Date(config.timespan.from ?? null)}
                       onChange={(_, data) => {
@@ -190,6 +235,7 @@ function BasicConfig(props) {
         }}>
           结束时间
           <DatePicker allowTextInput={true}
+                      strings={datePickerLocaleStrings}
                       formatDate={formatDate}
                       value={new Date(config.timespan.to ?? null)}
                       onChange={(_, data) => {
@@ -201,6 +247,48 @@ function BasicConfig(props) {
                       }}
                       increment={5} />
         </div>
+      </div>
+    </div>
+  );
+}
+
+function ChartsConfig(props) {
+  const { config, message, onConfigChange, ...rest } = props;
+  const ChartButton = (props) => {
+    const { type, description, selected, onClick, ...rest } = props;
+    return (
+      <CompoundButton appearance={selected ? "primary" : "secondary"}
+                      onClick={onClick}
+                      secondaryContent={description}>
+        <span className={"colorBrandForeground1"}>{type}</span>
+      </CompoundButton>
+    );
+  };
+  const charts = [
+    { type: "行驶方向统计", description: "显示车辆行驶方向统计图" },
+    { type: "行驶速度统计", description: "显示车辆行驶速度统计图" },
+    { type: "高峰区域统计", description: "显示高峰行驶区域统计图" },
+    { type: "高峰时段统计", description: "显示车辆各时段流量统计图(小时)" }
+  ];
+  const selectedChart = config.charts.type;
+  return (
+    <div {...rest}>
+      <div style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(2, 1fr)",
+        gap: 5
+      }}>
+        {
+          charts.map(({ type, description }, index) => (
+            <ChartButton key={index}
+                         type={type}
+                         description={description}
+                         selected={type === selectedChart}
+                         onClick={() => {
+                           onConfigChange(setObject(config, "charts.type", type));
+                         }} />
+          ))
+        }
       </div>
     </div>
   );
@@ -232,6 +320,9 @@ function controlPanel(props) {
         <Tab value="street">
           道路
         </Tab>
+        <Tab value="charts">
+          图表
+        </Tab>
       </TabList>
       {
         config.selectedTab === "grid" && (
@@ -257,14 +348,28 @@ function controlPanel(props) {
                         style={{ width: "100%" }} />
         )
       }
+      {
+        config.selectedTab === "charts" && (
+          <ChartsConfig config={config}
+                        message={message}
+                        onConfigChange={onConfigChange}
+                        style={{ width: "100%" }} />
+        )
+      }
       <BasicConfig style={{ width: "100%" }}
                    config={config}
                    message={message}
                    onConfigChange={onConfigChange} />
-      <AutoPlayConfig style={{ width: "100%" }}
-                      config={config}
-                      message={message}
-                      onConfigChange={onConfigChange} />
+      {
+        ["grid", "position", "street"].includes(config.selectedTab) && (
+          <>
+            <AutoPlayConfig style={{ width: "100%" }}
+                            config={config}
+                            message={message}
+                            onConfigChange={onConfigChange} />
+          </>
+        )
+      }
     </div>
   );
 }

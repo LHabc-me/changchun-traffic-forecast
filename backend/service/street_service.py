@@ -1,9 +1,7 @@
-from math import floor
-
 from sqlalchemy import text
 
-from service.engine import Session
-from service.get_level import get_level
+from dao.engine import Session
+from utils.get_level import get_level
 
 
 def street_service(timespan, split_mode):

@@ -12,6 +12,9 @@ asarUnpack:
   - resources/**
 win:
   executableName: changchun-traffic-forecast
+  artifactName: ${productName}-${arch}.${ext}
+  target:
+    - portable
 nsis:
   artifactName: ${name}-${version}-setup.${ext}
   shortcutName: ${productName}

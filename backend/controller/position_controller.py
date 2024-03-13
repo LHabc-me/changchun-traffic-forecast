@@ -10,4 +10,8 @@ def position_controller():
     data = request.get_json()
     timespan = data['timespan']
     response = position_service(timespan)
+    response = {
+        "type": "position",
+        "data": response
+    }
     return Response(json.dumps(response), status=200, mimetype='application/json')

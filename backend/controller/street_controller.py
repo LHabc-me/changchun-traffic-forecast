@@ -11,4 +11,8 @@ def position_controller():
     timespan = data['timespan']
     split_mode = data['split']['mode']
     response = street_service(timespan, split_mode)
+    response = {
+        "type": "street",
+        "data": response
+    }
     return Response(json.dumps(response), status=200, mimetype='application/json')
