@@ -53,9 +53,9 @@ function Legend(props) {
           gap: 5
         }}>
           <Row text="严重拥堵" color={colorMap[1]} type={type} />
-          <Row text="较拥堵" color={colorMap[2]} type={type} />
-          <Row text="拥堵" color={colorMap[3]} type={type} />
-          <Row text="轻度拥堵" color={colorMap[4]} type={type} />
+          <Row text="中度拥堵" color={colorMap[2]} type={type} />
+          <Row text="轻度拥堵" color={colorMap[3]} type={type} />
+          <Row text="基本通畅" color={colorMap[4]} type={type} />
           <Row text="通畅" color={colorMap[5]} type={type} />
         </div>
       </div>

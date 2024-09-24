@@ -15,7 +15,14 @@ def grid_service(grid, timespan):
 
     # 查询指定时间段内的出租车数据
     session = Session()
-    sql_query = text("SELECT speed, lon, lat FROM all_data WHERE time BETWEEN :start_time AND :end_time")
+    sql_query = text("""
+            SELECT 
+                speed, 
+                ST_X(geometry) AS lon, 
+                ST_Y(geometry) AS lat 
+            FROM all_data 
+            WHERE time BETWEEN :start_time AND :end_time
+        """)
     query = session.execute(
         sql_query,
         {

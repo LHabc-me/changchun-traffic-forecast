@@ -12,7 +12,7 @@ asarUnpack:
   - resources/**
 win:
   executableName: changchun-traffic-forecast
-  artifactName: ${productName}-${arch}.${ext}
+  artifactName: 长春市道路交通分析预测.${ext}
   target:
     - portable
 nsis:

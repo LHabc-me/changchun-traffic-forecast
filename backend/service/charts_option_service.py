@@ -1,12 +1,18 @@
+import json
+
 from sqlalchemy import text
 
 from dao.engine import Session
-from service.direction_service import direction_service
-from service.position_service import position_service
 import pyecharts
 from pyecharts import options as opts
 
-from service.speed_service import speed_service
+color_span = [
+    "#313695",
+    "#4575b4",
+    "#74add1",
+    "#abd9e9",
+    "#e0f3f8",
+]
 
 
 def speed_chart(timespan):
@@ -38,7 +44,7 @@ def speed_chart(timespan):
 
     chart = pyecharts.charts.Line()
     chart.add_xaxis([i[0] for i in data])
-    chart.add_yaxis("平均速度", [i[1] for i in data])
+    chart.add_yaxis("平均速度(km/h)", [i[1] for i in data])
     chart.set_global_opts(
         title_opts=opts.TitleOpts(title="行驶速度统计",
                                   pos_left="center"),
@@ -92,6 +98,7 @@ def direction_chart(timespan):
         "",
         data,
         rosetype="radius",
+        start_angle=122.5,
     )
     chart.set_series_opts(label_opts=opts.LabelOpts(formatter="{b}: {c} ({d}%)"))
     chart.set_global_opts(
@@ -112,17 +119,14 @@ def peak_area_chart(timespan):
         SELECT 
             COUNT(*) AS count,
             l.name
-        FROM all_data ad
-        LEFT JOIN lines l 
+        FROM all_data ad JOIN lines l 
         ON
                 ad.ogc_fid = l.ogc_fid
-            AND
-                l.name IS NOT NULL
         WHERE 
                 ad."time" BETWEEN :start_time AND :end_time
             AND 
                 l.name IS NOT NULL
-        GROUP BY ad.ogc_fid, l.name
+        GROUP BY l.ogc_fid
         ORDER BY count DESC 
         LIMIT 10
     """)
@@ -145,11 +149,21 @@ def peak_area_chart(timespan):
     # grid.containLabel = true
     chart = pyecharts.charts.Bar()
     chart.add_xaxis([i[1] for i in data])
-    chart.add_yaxis("车辆数", [i[0] for i in data])
+    items = []
+    lable_opts = opts.LabelOpts(
+        is_show=True,
+        position="right",
+        formatter="记录数：{c}",
+        font_size=14,
+        font_style="bold",
+    )
+    for i in data:
+        items.append(opts.BarItem(name=i[1], value=i[0], label_opts=lable_opts))
+    chart.add_yaxis("记录数", items)
     chart.reversal_axis()
 
     chart.set_global_opts(
-        title_opts=opts.TitleOpts(title="高峰区域统计",
+        title_opts=opts.TitleOpts(title="路段车流量统计",
                                   pos_left="center"),
         legend_opts=opts.LegendOpts(pos_right="5%",
                                     pos_top="top",
@@ -189,10 +203,20 @@ def peak_time_chart(timespan):
     # 生成柱状图
     chart = pyecharts.charts.Bar()
     chart.add_xaxis([i[1] for i in data])
-    chart.add_yaxis("车辆数", [i[0] for i in data])
+    items = []
+    lable_opts = opts.LabelOpts(
+        is_show=True,
+        position="top",
+        formatter="记录数：{c}",
+        font_size=14,
+        font_style="bold",
+    )
+    for i in data:
+        items.append(opts.BarItem(name=i[1], value=i[0], label_opts=lable_opts))
+    chart.add_yaxis("记录数", items)
 
     chart.set_global_opts(
-        title_opts=opts.TitleOpts(title="高峰时段统计",
+        title_opts=opts.TitleOpts(title="时段车流量统计",
                                   pos_left="center"),
         legend_opts=opts.LegendOpts(pos_right="20",
                                     pos_top="top",
@@ -201,18 +225,18 @@ def peak_time_chart(timespan):
 
     chart.set_series_opts(
         label_opts=opts.LabelOpts(is_show=False),
-        markpoint_opts=opts.MarkPointOpts(
-            data=[
-                opts.MarkPointItem(type_="max", name="最大值", symbol_size=80),
-                opts.MarkPointItem(type_="min", name="最小值", symbol_size=80),
-            ]
-        ),
+        # markpoint_opts=opts.MarkPointOpts(
+        #     data=[
+        #         opts.MarkPointItem(type_="max", name="最大值", symbol_size=80),
+        #         opts.MarkPointItem(type_="min", name="最小值", symbol_size=80),
+        #     ]
+        # ),
     )
 
     # chart.overlap((
     #     pyecharts.charts.Line()
     #     .add_xaxis([i[1] for i in data])
-    #     .add_yaxis("车辆数", [i[0] for i in data])
+    #     .add_yaxis("记录数", [i[0] for i in data])
     #     .set_global_opts(
     #         title_opts=opts.TitleOpts(title="高峰时段统计",
     #                                   pos_left="center"),
@@ -226,13 +250,14 @@ def peak_time_chart(timespan):
 
 def charts_option_service(timespan, chartsType):
     chart = None
-    if chartsType == "行驶速度统计":
-        chart = speed_chart(timespan)
-    elif chartsType == "行驶方向统计":
+
+    if chartsType == "行驶方向统计":
         chart = direction_chart(timespan)
-    elif chartsType == "高峰区域统计":
+    elif chartsType == "行驶速度统计":
+        chart = speed_chart(timespan)
+    elif chartsType == "路段车流量统计":
         chart = peak_area_chart(timespan)
-    elif chartsType == "高峰时段统计":
+    elif chartsType == "时段车流量统计":
         chart = peak_time_chart(timespan)
 
     if not chart:

@@ -9,6 +9,8 @@ import {
 import { TimePicker } from "@fluentui/react-timepicker-compat";
 import { DatePicker, defaultDatePickerStrings } from "@fluentui/react-datepicker-compat";
 import { setObject, formatDate, formatTime } from "../utils";
+import { useContext } from "react";
+import ToastContext from "../contexts/ToastContext";
 
 function GridConfig(props) {
   const { config, message, onConfigChange, ...rest } = props;
@@ -106,7 +108,7 @@ function AutoPlayConfig(props) {
         alignItems: "center"
       }}>
         <div style={{ flex: 1 }}>
-          <Checkbox value={config.autoPlay.enable}
+          <Checkbox checked={config.autoPlay.enable}
                     onChange={(_, data) => {
                       onConfigChange(setObject(config, "autoPlay.enable", data.checked));
                     }} />
@@ -221,7 +223,6 @@ function BasicConfig(props) {
                       }} />
           <TimePicker value={formatTime(new Date(config.timespan.from ?? null))}
                       onTimeChange={(_, data) => {
-                        console.log(data.selectedTime);
                         onConfigChange(setObject(config, "timespan.from", `${formatDate(new Date(config.timespan.from))} ${formatTime(data.selectedTime)}`));
                       }}
                       freeform={true}
@@ -266,9 +267,9 @@ function ChartsConfig(props) {
   };
   const charts = [
     { type: "行驶方向统计", description: "显示车辆行驶方向统计图" },
-    { type: "行驶速度统计", description: "显示车辆行驶速度统计图" },
-    { type: "高峰区域统计", description: "显示高峰行驶区域统计图" },
-    { type: "高峰时段统计", description: "显示车辆各时段流量统计图(小时)" }
+    { type: "行驶速度统计", description: "显示车辆行驶速度统计图(小时)" },
+    { type: "路段车流量统计", description: "显示各路段车流量统计图" },
+    { type: "时段车流量统计", description: "显示各时段车流量统计图(小时)" }
   ];
   const selectedChart = config.charts.type;
   return (
@@ -296,12 +297,20 @@ function ChartsConfig(props) {
 
 
 function controlPanel(props) {
-  const { config, message, onConfigChange, open, ...rest } = props;
+  const { config, message, onConfigChange, open, isReloading, ...rest } = props;
   // const configBasicProps = {
   //   style: { width: "100%" },
   //   config: { config },
   //   message: { message }
   // };
+  const handleConfigChange = (newConfig) => {
+    // if (isReloading) {
+    //   toast.error("正在刷新中，请稍后");
+    //   return;
+    // }
+    onConfigChange(newConfig);
+  };
+  const toast = useContext(ToastContext);
   return (
     <div style={{
       display: "flex",
@@ -310,7 +319,9 @@ function controlPanel(props) {
       gap: 10
     }}>
       <TabList selectedValue={config.selectedTab}
-               onTabSelect={(_, data) => onConfigChange(setObject(config, "selectedTab", data.value))}>
+               onTabSelect={(_, data) => {
+                 handleConfigChange(setObject(config, "selectedTab", data.value));
+               }}>
         <Tab value="grid">
           栅格
         </Tab>
@@ -328,7 +339,7 @@ function controlPanel(props) {
         config.selectedTab === "grid" && (
           <GridConfig config={config}
                       message={message}
-                      onConfigChange={onConfigChange}
+                      onConfigChange={handleConfigChange}
                       style={{ width: "100%" }} />
         )
       }
@@ -336,7 +347,7 @@ function controlPanel(props) {
         config.selectedTab === "position" && (
           <PositionConfig config={config}
                           message={message}
-                          onConfigChange={onConfigChange}
+                          onConfigChange={handleConfigChange}
                           style={{ width: "100%" }} />
         )
       }
@@ -344,7 +355,7 @@ function controlPanel(props) {
         config.selectedTab === "street" && (
           <StreetConfig config={config}
                         message={message}
-                        onConfigChange={onConfigChange}
+                        onConfigChange={handleConfigChange}
                         style={{ width: "100%" }} />
         )
       }
@@ -352,21 +363,21 @@ function controlPanel(props) {
         config.selectedTab === "charts" && (
           <ChartsConfig config={config}
                         message={message}
-                        onConfigChange={onConfigChange}
+                        onConfigChange={handleConfigChange}
                         style={{ width: "100%" }} />
         )
       }
       <BasicConfig style={{ width: "100%" }}
                    config={config}
                    message={message}
-                   onConfigChange={onConfigChange} />
+                   onConfigChange={handleConfigChange} />
       {
         ["grid", "position", "street"].includes(config.selectedTab) && (
           <>
             <AutoPlayConfig style={{ width: "100%" }}
                             config={config}
                             message={message}
-                            onConfigChange={onConfigChange} />
+                            onConfigChange={handleConfigChange} />
           </>
         )
       }

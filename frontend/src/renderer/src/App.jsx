@@ -56,7 +56,7 @@ function App() {
     autoPlay: {
       enable: false,
       frameInterval: "1",// 单位：秒
-      dataInterval: "5" // 单位：分钟
+      dataInterval: "10" // 单位：分钟
     }
   });
   const [configMessage, setConfigMessage] = useState({
@@ -224,10 +224,11 @@ function App() {
       setConfigMessage(message);
       const nextFrame = () => {
         try {
-          const data = dataArray.shift();
+          const { data, type } = dataArray.shift();
           message.autoPlay.progress.value = ++count;
           message.autoPlay.progress.currentTimespan = timespanArray.shift();
           setConfigMessage(message);
+          setDataType(type);
           setData(data);
           if (dataArray.length === 0) {
             stopAutoPlay();
@@ -248,6 +249,10 @@ function App() {
   };
 
   const reload = async () => {
+    if (isReloading) {
+      toast.error("正在刷新中，请稍后");
+      return;
+    }
     setConfig(_.cloneDeep(configEditing));
     if (configEditing.autoPlay.enable &&
       ["grid", "position", "street"].includes(configEditing.selectedTab)) {
@@ -263,7 +268,8 @@ function App() {
       height: "100vh",
       width: "100vw",
       display: "flex",
-      flexDirection: "row"
+      flexDirection: "row",
+      overflowY: "hidden"
     }}>
       {
         !isConfigPanelOpen && (
@@ -302,6 +308,7 @@ function App() {
                             onConfigChange={(c) => {
                               setConfigEditing(c);
                             }}
+                            isReloading={isReloading}
               />
               {
                 !isAutoPlaying && (

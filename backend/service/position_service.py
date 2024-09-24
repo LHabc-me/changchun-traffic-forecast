@@ -9,8 +9,11 @@ def position_service(timespan):
     :param timespan: 时间段
     """
     session = Session()
-    sql = text("SELECT lon, lat FROM all_data "
-               "WHERE time BETWEEN :start_time AND :end_time")
+    sql = text("""
+        SELECT ST_X(geometry) AS lon, ST_Y(geometry) AS lat
+        FROM all_data
+        WHERE time BETWEEN :start_time AND :end_time
+    """)
     query = session.execute(
         sql,
         {
